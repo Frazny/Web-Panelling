@@ -29,10 +29,17 @@ ALL_COGS = [
     "cogs.manifest", "cogs.taglog",
 ]
 
-app = Flask(__name__)
+# __file__ her zaman panel/app.py'yi gösterir — template/static dizinlerini buna göre belirt
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(_BASE_DIR, "templates"),
+    static_folder=os.path.join(_BASE_DIR, "static"),
+)
 app.secret_key = secrets.token_hex(32)
 
-BOT_DIR = os.path.join(os.path.dirname(__file__), "..")
+BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
 CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
 DB_PATH = os.path.join(BOT_DIR, "data", "bot.db")
 
