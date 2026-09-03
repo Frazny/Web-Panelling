@@ -191,7 +191,15 @@ def callback():
     except Exception as e:
         return f"Kullanıcı bilgisi hatası: {e}", 500
 
-    panel_token = _make_token({"user": user, "discord_token": token})
+    panel_token = _make_token({
+        "user": {
+            "id": user.get("id"),
+            "username": user.get("username"),
+            "avatar": user.get("avatar"),
+            "global_name": user.get("global_name"),
+        },
+        "discord_token": token,
+    })
     resp = make_response(redirect(url_for("dashboard")))
     resp.set_cookie("panel_token", panel_token, max_age=86400*7, httponly=True, samesite="Lax")
     return resp
