@@ -56,12 +56,14 @@ body {
 body::before {
   content:'';
   position:fixed; inset:0; pointer-events:none; z-index:0;
-  background: radial-gradient(ellipse 70% 60% at 50% -10%, rgba(124,106,247,0.18) 0%, transparent 65%);
+  background:
+    radial-gradient(ellipse 60% 55% at 50% -5%, rgba(124,106,247,0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 50% 0%, rgba(200,180,255,0.10) 0%, transparent 40%);
 }
 body::after {
   content:'';
   position:fixed; inset:0; pointer-events:none; z-index:0;
-  background: radial-gradient(ellipse 40% 40% at 80% 90%, rgba(124,106,247,0.08) 0%, transparent 60%);
+  background: radial-gradient(ellipse 40% 40% at 80% 90%, rgba(124,106,247,0.06) 0%, transparent 60%);
 }
 
 ::-webkit-scrollbar { width:4px; height:4px; }

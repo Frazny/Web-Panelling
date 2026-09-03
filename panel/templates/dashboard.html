@@ -4,36 +4,44 @@
 <div class="page-title">Dashboard</div>
 <div class="page-subtitle">Bot durumu ve genel istatistikler.</div>
 
-<!-- Stat Cards -->
-<div class="stat-grid">
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon-wrap" style="background:rgba(59,130,246,.12);color:var(--blue)">📡</div>
-      <span class="stat-status offline" id="pingStatus">Offline</span>
+<!-- Kyzen-style big stat cards — 4 cols -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+
+  <!-- Ping -->
+  <div class="kyzen-stat-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="background:rgba(59,130,246,.15);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1rem">📡</div>
+      <span class="stat-status offline" id="pingStatus">● Offline</span>
     </div>
-    <div class="stat-val" id="botPing">0 ms</div>
-    <div class="stat-lbl">Bot Ping</div>
+    <div style="font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1" id="botPing">0 ms</div>
+    <div style="font-size:.75rem;color:var(--text2);margin-top:6px">Bot Ping</div>
   </div>
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon-wrap" style="background:rgba(34,197,94,.12);color:var(--green)">⏱️</div>
+
+  <!-- Uptime -->
+  <div class="kyzen-stat-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="background:rgba(34,197,94,.12);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1rem">⏱️</div>
     </div>
-    <div class="stat-val" id="botUptime">0s</div>
-    <div class="stat-lbl">Uptime</div>
+    <div style="font-size:2rem;font-weight:800;letter-spacing:-.04em;line-height:1" id="botUptime">0s</div>
+    <div style="font-size:.75rem;color:var(--text2);margin-top:6px">Uptime</div>
   </div>
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon-wrap" style="background:rgba(124,106,247,.12);color:var(--accent2)">🏠</div>
+
+  <!-- Sunucu -->
+  <div class="kyzen-stat-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="background:rgba(124,106,247,.12);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1rem">🏠</div>
     </div>
-    <div class="stat-val" id="statGuildName" style="font-size:1rem">{{ config.guild_id }}</div>
-    <div class="stat-lbl">Aktif Sunucu</div>
+    <div style="font-size:1rem;font-weight:700;line-height:1.3" id="guildName">{{ config.guild_id }}</div>
+    <div style="font-size:.75rem;color:var(--text2);margin-top:6px">Aktif Sunucu</div>
   </div>
-  <div class="stat-card" id="protectionCard">
-    <div class="stat-top">
-      <div class="stat-icon-wrap" style="background:var(--red-bg);color:var(--red)">🔴</div>
+
+  <!-- Koruma Durumu -->
+  <div class="kyzen-stat-card" id="protCard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div style="background:var(--red-bg);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:1rem" id="protIcon">🔴</div>
     </div>
-    <div class="stat-val" style="font-size:.9rem;color:var(--red)" id="protectionStatus">KORUMA ÇEVRİMDIŞI</div>
-    <div class="stat-lbl">Kyzen koruma modülleri aktif değil</div>
+    <div style="font-size:.9rem;font-weight:800;color:var(--red)" id="protLabel">KORUMA ÇEVRİMDIŞI</div>
+    <div style="font-size:.72rem;color:var(--text2);margin-top:6px">Kyzen koruma modülleri aktif değil</div>
   </div>
 </div>
 
@@ -41,93 +49,113 @@
 <div class="card">
   <div class="card-header"><div class="card-title">☁️ Bot Kontrol Paneli</div></div>
   <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
-    <button onclick="botAction('start')"   class="btn btn-success" id="btnStart">▶ Başlat</button>
-    <button onclick="botAction('stop')"    class="btn btn-danger"  id="btnStop">⏹ Durdur</button>
-    <button onclick="botAction('restart')" class="btn btn-warning" id="btnRestart">🔄 Yeniden Başlat</button>
-    <button onclick="panicMode()"          class="btn btn-panic"   id="btnPanic">⚡ PANIC MODE</button>
+    <button onclick="botAction('start')"   class="btn btn-success">▶ Başlat</button>
+    <button onclick="botAction('stop')"    class="btn btn-danger" >⏹ Durdur</button>
+    <button onclick="botAction('restart')" class="btn btn-warning">🔄 Yeniden Başlat</button>
+    <button onclick="panicMode()"          class="btn btn-panic"  >⚡ PANIC MODE</button>
   </div>
 </div>
 
-<!-- Canlı Log Konsolu -->
+<!-- Canlı Log -->
 <div class="card">
   <div class="card-header">
     <div class="card-title">⌨️ Canlı Güvenlik Log Konsolu</div>
     <div style="display:flex;align-items:center;gap:8px">
-      <span style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 2s infinite;display:inline-block"></span>
-      <span style="font-size:.75rem;color:var(--green)">Canlı Akış</span>
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:pulse-dot 2s infinite"></span>
+      <span style="font-size:.72rem;color:var(--green)">Canlı Akış</span>
       <button onclick="clearLogs()" class="btn btn-ghost btn-sm">Temizle</button>
     </div>
   </div>
   <div class="log-console" id="logConsole">
-    <div class="log-line"><span class="log-time">Yükleniyor...</span></div>
+    <div style="color:var(--text3);font-size:.78rem">Yükleniyor...</div>
   </div>
 </div>
+
+<style>
+.kyzen-stat-card {
+  background: rgba(20,21,34,0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 20px;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp .4s ease both;
+}
+.kyzen-stat-card::before {
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(124,106,247,.04),transparent);
+  opacity:0;transition:.2s;
+}
+.kyzen-stat-card:hover { border-color:rgba(124,106,247,.25); transform:translateY(-2px); }
+.kyzen-stat-card:hover::before { opacity:1; }
+.stat-status { font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:99px; }
+.stat-status.online  { background:var(--green-bg);color:var(--green); }
+.stat-status.offline { background:var(--red-bg);  color:var(--red); }
+@keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:.4} }
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-let logLines = [];
-
-async function loadStatus() {
+async function loadStatus(){
   try {
-    const r = await fetch('/api/bot/status');
-    const d = await r.json();
-    document.getElementById('botUptime').textContent = d.uptime || '0s';
-    const ps = document.getElementById('pingStatus');
-    if (d.online) {
-      ps.textContent = 'Online'; ps.className = 'stat-status online';
-      document.getElementById('botPing').textContent = Math.floor(Math.random()*40+10) + ' ms';
-      document.getElementById('protectionStatus').textContent = 'KORUMA AKTİF';
-      document.getElementById('protectionStatus').style.color = 'var(--green)';
-      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').style.background = 'var(--green-bg)';
-      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').style.color = 'var(--green)';
-      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').textContent = '🟢';
+    const r=await fetch('/api/bot/status');
+    const d=await r.json();
+    document.getElementById('botUptime').textContent=d.uptime||'0s';
+    const ps=document.getElementById('pingStatus');
+    if(d.online){
+      ps.textContent='● Online'; ps.className='stat-status online';
+      document.getElementById('botPing').textContent=Math.floor(Math.random()*40+10)+' ms';
+      document.getElementById('protLabel').textContent='KORUMA AKTİF';
+      document.getElementById('protLabel').style.color='var(--green)';
+      document.getElementById('protIcon').textContent='🟢';
+      document.getElementById('protIcon').style.background='var(--green-bg)';
     }
   } catch {}
 }
 
-async function loadLogs() {
+async function loadLogs(){
   try {
-    const r = await fetch('/api/logs/file?file=bot_out&lines=30');
-    const d = await r.json();
-    if (!d.content) return;
-    const lines = d.content.trim().split('\n').slice(-20);
-    const console_ = document.getElementById('logConsole');
-    console_.innerHTML = lines.map(line => {
-      const esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      let cat = 'info', catLabel = 'INFO';
-      if (/ERROR|error|Traceback/i.test(esc)) { cat='guard'; catLabel='ERROR'; }
-      else if (/WARN|warn/i.test(esc)) { cat='warn'; catLabel='WARN'; }
-      else if (/guard|protect|blocked|ban/i.test(esc)) { cat='guard'; catLabel='GUARD'; }
-      else if (/ok|success|ready|started/i.test(esc)) { cat='ok'; catLabel='OK'; }
-      const time = new Date().toLocaleTimeString('tr-TR');
-      return `<div class="log-line"><span class="log-time">${time}</span><span class="log-cat ${cat}">${catLabel}</span><span class="log-msg">${esc}</span></div>`;
+    const r=await fetch('/api/logs/file?file=bot_out&lines=25');
+    const d=await r.json();
+    if(!d.content) return;
+    const lines=d.content.trim().split('\n').slice(-20);
+    const con=document.getElementById('logConsole');
+    con.innerHTML=lines.map(line=>{
+      const e=line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      let cat='info',cl='INFO';
+      if(/ERROR|error|Traceback/i.test(e)){cat='guard';cl='ERROR';}
+      else if(/WARN/i.test(e)){cat='warn';cl='WARN';}
+      else if(/guard|protect|blocked/i.test(e)){cat='guard';cl='GUARD';}
+      else if(/ready|started|giriş/i.test(e)){cat='ok';cl='OK';}
+      const t=new Date().toLocaleTimeString('tr-TR');
+      return `<div class="log-line"><span class="log-time">${t}</span><span class="log-cat ${cat}">${cl}</span><span class="log-msg">${e}</span></div>`;
     }).join('');
-    console_.scrollTop = console_.scrollHeight;
+    con.scrollTop=con.scrollHeight;
   } catch {}
 }
 
-function clearLogs() { document.getElementById('logConsole').innerHTML = '<div class="log-line"><span class="log-time">—</span><span class="log-msg">Log konsolu temizlendi.</span></div>'; }
+function clearLogs(){document.getElementById('logConsole').innerHTML='<div style="color:var(--text3);font-size:.78rem">Log konsolu temizlendi.</div>';}
 
-async function botAction(action) {
-  if (action === 'restart') {
-    if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
-    const r = await fetch('/api/restart', {method:'POST'});
-    const d = await r.json();
-    showToast(d.ok ? 'Yeniden başlatma isteği gönderildi!' : 'Hata: '+d.error, d.ok ? 'success' : 'error');
-  } else {
-    showToast(`${action} komutu gönderildi.`, 'success');
-  }
+async function botAction(action){
+  if(action==='restart'){
+    if(!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
+    const r=await fetch('/api/restart',{method:'POST'});
+    const d=await r.json();
+    showToast(d.ok?'Yeniden başlatma isteği gönderildi!':'Hata: '+d.error,d.ok?'success':'error');
+  } else showToast(action+' komutu gönderildi.','success');
 }
 
-function panicMode() {
-  if (!confirm('⚡ PANIC MODE: Tüm koruma seviyelerini maksimuma alır ve şüpheli aktiviteleri anında engeller. Devam etmek istiyor musun?')) return;
-  showToast('⚡ PANIC MODE aktifleştirildi!', 'warning');
+function panicMode(){
+  if(!confirm('⚡ PANIC MODE aktifleştirilsin mi?')) return;
+  showToast('⚡ PANIC MODE aktifleştirildi!','warning');
 }
 
-// Init
 loadStatus(); loadLogs();
-setInterval(loadStatus, 15000);
-setInterval(loadLogs, 8000);
+setInterval(loadStatus,15000);
+setInterval(loadLogs,8000);
 </script>
 {% endblock %}
