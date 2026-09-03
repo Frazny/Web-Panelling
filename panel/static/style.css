@@ -1194,3 +1194,40 @@ textarea.form-input { resize: vertical; }
   .settings-layout { grid-template-columns: 1fr; }
   .login-card { min-width: unset; padding: 36px 24px; }
 }
+
+/* ── User Cell (leaderboard) ─────────────────── */
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-cell-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(108,99,255,0.3);
+  object-fit: cover;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+tr:hover .user-cell-avatar {
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transform: scale(1.08);
+}
+
+.user-cell-name {
+  font-weight: 600;
+  font-size: .875rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.user-cell-id {
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-family: 'Consolas', monospace;
+  margin-top: 1px;
+}

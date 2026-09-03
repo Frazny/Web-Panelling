@@ -74,6 +74,61 @@ DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "http://localhost:
 DISCORD_API = "https://discord.com/api/v10"
 DISCORD_CDN = "https://cdn.discordapp.com"
 
+# Kullanıcı bilgisi cache — API'yi çok sık çağırmamak için
+_user_cache = {}
+_user_cache_ttl = {}
+_USER_CACHE_SECONDS = 300  # 5 dakika
+
+def get_bot_token():
+    """config.json'dan bot token'ı okur."""
+    try:
+        return load_config().get("token", "")
+    except Exception:
+        return os.environ.get("BOT_TOKEN", "")
+
+def fetch_discord_user(user_id: str) -> dict:
+    """Discord API'den kullanıcı bilgisi çeker, cache'ler."""
+    now = time.time()
+    if user_id in _user_cache and now - _user_cache_ttl.get(user_id, 0) < _USER_CACHE_SECONDS:
+        return _user_cache[user_id]
+
+    token = get_bot_token()
+    if not token:
+        return {"id": user_id, "username": str(user_id), "avatar": None}
+
+    try:
+        r = requests.get(
+            f"{DISCORD_API}/users/{user_id}",
+            headers={"Authorization": f"Bot {token}"},
+            timeout=5,
+        )
+        if r.status_code == 200:
+            data = r.json()
+            _user_cache[user_id] = data
+            _user_cache_ttl[user_id] = now
+            return data
+    except Exception:
+        pass
+
+    fallback = {"id": user_id, "username": str(user_id), "avatar": None}
+    _user_cache[user_id] = fallback
+    _user_cache_ttl[user_id] = now
+    return fallback
+
+def user_avatar_url(user: dict, size: int = 64) -> str:
+    uid = str(user.get("id", ""))
+    avatar = user.get("avatar")
+    if avatar:
+        ext = "gif" if avatar.startswith("a_") else "png"
+        return f"{DISCORD_CDN}/avatars/{uid}/{avatar}.{ext}?size={size}"
+    # Default avatar
+    discriminator = int(user.get("discriminator") or 0)
+    idx = (int(uid) >> 22) % 6 if discriminator == 0 else discriminator % 5
+    return f"{DISCORD_CDN}/embed/avatars/{idx}.png"
+
+def user_display_name(user: dict) -> str:
+    return user.get("global_name") or user.get("display_name") or user.get("username") or str(user.get("id", "?"))
+
 
 def load_config():
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -357,11 +412,14 @@ def levels():
             (guild_id,),
         )
         for r in cur.fetchall():
+            user_info = fetch_discord_user(str(r[0]))
             leaderboard.append({
                 "user_id": r[0],
                 "xp": r[1],
                 "messages": r[2],
                 "voice_seconds": r[3],
+                "username": user_display_name(user_info),
+                "avatar": user_avatar_url(user_info, 64),
             })
         db.close()
     except Exception:
@@ -382,7 +440,13 @@ def economy():
             (guild_id,),
         )
         for r in cur.fetchall():
-            leaderboard.append({"user_id": r[0], "balance": r[1]})
+            user_info = fetch_discord_user(str(r[0]))
+            leaderboard.append({
+                "user_id": r[0],
+                "balance": r[1],
+                "username": user_display_name(user_info),
+                "avatar": user_avatar_url(user_info, 64),
+            })
         db.close()
     except Exception:
         pass

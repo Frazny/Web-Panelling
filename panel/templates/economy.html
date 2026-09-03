@@ -11,8 +11,8 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th style="width:60px">#</th>
-          <th>Kullanıcı ID</th>
+          <th style="width:56px">#</th>
+          <th>Kullanıcı</th>
           <th>Bakiye</th>
           <th>Pay</th>
         </tr>
@@ -27,12 +27,22 @@
               {{ loop.index }}
             </div>
           </td>
-          <td><code>{{ m.user_id }}</code></td>
+          <td>
+            <div class="user-cell">
+              <img src="{{ m.avatar }}" class="user-cell-avatar" alt="" loading="lazy"
+                   onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+              <div>
+                <div class="user-cell-name">{{ m.username }}</div>
+                <div class="user-cell-id">{{ m.user_id }}</div>
+              </div>
+            </div>
+          </td>
           <td><strong>{{ m.balance | int }}</strong> 💵</td>
           <td style="min-width:140px">
             <div class="xp-bar-wrap">
               <div class="xp-bar" style="width:0;background:linear-gradient(90deg,#f59e0b,#d97706)" data-width="{{ pct }}%"></div>
             </div>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">{{ pct }}%</div>
           </td>
         </tr>
         {% endfor %}
