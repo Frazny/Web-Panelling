@@ -192,8 +192,8 @@
     <main class="main-content">
         <header class="header">
             <div class="page-title">
-                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-                <p>{% block page_subtitle %}Bot durumu ve genel istatistikler.{% endblock %}</p>
+                <h1 id="tab-title">{% block page_title %}Dashboard{% endblock %}</h1>
+                <p id="tab-subtitle">{% block page_subtitle %}Bot durumu ve genel istatistikler.{% endblock %}</p>
             </div>
             <div class="user-profile-wrapper" style="display:flex;align-items:center;gap:15px;">
                 <button id="theme-toggle-btn" onclick="toggleTheme()" style="background:var(--card-color);border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease;font-size:1.1rem;box-shadow:0 4px 10px rgba(0,0,0,0.15);">

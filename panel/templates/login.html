@@ -5,142 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bot Panel — Giriş</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    /* Particle canvas */
-    #particles { position:fixed; inset:0; z-index:0; pointer-events:none; }
-
-    /* Grid lines */
-    .grid-lines {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image:
-        linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-    }
-
-    .login-features {
-      display: flex; gap: 20px; justify-content: center;
-      margin-top: 32px; flex-wrap: wrap;
-    }
-
-    .feature-pill {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 99px;
-      font-size: .75rem; color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .version-tag {
-      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-      font-size: .72rem; color: var(--text-muted); z-index: 2;
-      letter-spacing: .04em;
-    }
-  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="{{ url_for('static', filename='lightrays.js') }}"></script>
 </head>
-<body class="login-body">
-  <canvas id="particles"></canvas>
-  <div class="grid-lines"></div>
+<body class="auth-page">
+  <div class="cursor-glow" id="cursor-glow"></div>
+  <div class="particles-container" id="particles-container"></div>
+  <canvas id="particle-canvas" style="position:fixed;inset:0;pointer-events:none;z-index:0;"></canvas>
 
-  <div class="login-bg">
-    <div class="login-orb login-orb-1"></div>
-    <div class="login-orb login-orb-2"></div>
-    <div class="login-orb login-orb-3"></div>
-  </div>
-
-  <div class="login-container" style="position:relative;z-index:2">
-    <div class="login-card">
-      <div class="login-brand">
-        <div class="brand-icon-big">🤖</div>
-        <h1>Bot Panel</h1>
-        <p>Discord bot yönetim paneline hoş geldin</p>
+  <div class="auth-container" style="position:relative;z-index:1;">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <div style="width:72px;height:72px;background:linear-gradient(135deg,#5865f2,#8547ff);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;box-shadow:0 0 40px rgba(88,101,242,0.5);animation:pulse-logo 3s ease-in-out infinite;">🤖</div>
+        </div>
+        <h1 style="font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,#fff,#cbd5e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.02em;margin-bottom:6px;">Bot Panel</h1>
+        <p style="color:#949ba4;font-size:0.9rem;">Discord bot yönetim paneline hoş geldin</p>
       </div>
 
-      <a href="{{ discord_url }}" class="discord-btn">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
-        </svg>
-        Discord ile Giriş Yap
-      </a>
+      <div style="margin:2rem 0;">
+        <a href="{{ discord_url }}" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 28px;background:linear-gradient(135deg,#5865f2,#7c6af7);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.3s;box-shadow:0 8px 24px rgba(88,101,242,0.4);position:relative;overflow:hidden;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+          </svg>
+          Discord ile Giriş Yap
+        </a>
+      </div>
 
-      <div class="login-features">
-        <div class="feature-pill">⚡ Gerçek zamanlı</div>
-        <div class="feature-pill">🛡️ Güvenli OAuth2</div>
-        <div class="feature-pill">🎛️ Tam kontrol</div>
+      <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:99px;font-size:0.75rem;color:#949ba4;font-weight:500;">⚡ Gerçek zamanlı</span>
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:99px;font-size:0.75rem;color:#949ba4;font-weight:500;">🛡️ Güvenli OAuth2</span>
+        <span style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:99px;font-size:0.75rem;color:#949ba4;font-weight:500;">🎛️ Tam kontrol</span>
       </div>
     </div>
   </div>
 
-  <div class="version-tag">Bot Panel v2.0 · Made with ❤️</div>
+  <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);font-size:0.72rem;color:#949ba4;z-index:2;letter-spacing:.04em;">Bot Panel v2.0 · Made with ❤️</div>
+
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .auth-card { background:rgba(20,21,34,0.9);backdrop-filter:blur(24px);border:1px solid rgba(88,101,242,0.2);border-radius:24px;padding:52px 44px;min-width:400px;max-width:460px;box-shadow:0 32px 80px rgba(0,0,0,0.5);text-align:center; }
+    @keyframes pulse-logo { 0%,100%{box-shadow:0 0 20px rgba(88,101,242,0.4);}50%{box-shadow:0 0 40px rgba(88,101,242,0.6),0 0 80px rgba(88,101,242,0.2);} }
+  </style>
 
   <script>
-    // ── Particle sistemi
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    let W, H, particles = [];
+    // Cursor glow
+    const glow = document.getElementById('cursor-glow');
+    if (glow) document.addEventListener('mousemove', e => { glow.style.left=e.clientX+'px'; glow.style.top=e.clientY+'px'; });
 
-    function resize() {
-      W = canvas.width  = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * W;
-        this.y = Math.random() * H;
-        this.r = Math.random() * 1.5 + 0.3;
-        this.vx = (Math.random() - 0.5) * 0.3;
-        this.vy = (Math.random() - 0.5) * 0.3;
-        this.alpha = Math.random() * 0.5 + 0.1;
-        this.color = Math.random() > 0.5 ? '108,99,255' : '168,85,247';
-      }
-      update() {
-        this.x += this.vx; this.y += this.vy;
-        if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
-      }
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${this.color},${this.alpha})`;
-        ctx.fill();
+    // Particles
+    const container = document.getElementById('particles-container');
+    if (container) {
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div'); p.className = 'particle';
+        const s = Math.random()*5+2;
+        p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-20px;animation-duration:${Math.random()*10+10}s;animation-delay:${Math.random()*5}s;`;
+        container.appendChild(p);
       }
     }
 
-    for (let i = 0; i < 80; i++) particles.push(new Particle());
-
-    // Draw connections
-    function drawLines() {
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 120) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(108,99,255,${0.08 * (1 - dist/120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
+    // Canvas particle network
+    const canvas = document.getElementById('particle-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let W, H, pts = [];
+      function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+      resize(); window.addEventListener('resize', resize);
+      for(let i=0;i<80;i++) pts.push({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3});
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+        pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,1,0,Math.PI*2);ctx.fillStyle='rgba(88,101,242,0.3)';ctx.fill();});
+        for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(88,101,242,${0.08*(1-d/120)})`;ctx.stroke();}}
+        requestAnimationFrame(draw);
       }
+      draw();
     }
-
-    function animate() {
-      ctx.clearRect(0, 0, W, H);
-      particles.forEach(p => { p.update(); p.draw(); });
-      drawLines();
-      requestAnimationFrame(animate);
-    }
-    animate();
   </script>
 </body>
 </html>

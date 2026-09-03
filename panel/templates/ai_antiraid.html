@@ -1,99 +1,104 @@
 {% extends "base.html" %}
 {% block title %}AI Anti-Raid — Bot Panel{% endblock %}
-{% block content %}
-<div class="page-title">AI Anti-Raid</div>
-<div class="page-subtitle">Yapay zeka destekli saldırı ve anomali analizi.</div>
+{% block page_title %}AI Anti-Raid{% endblock %}
+{% block page_subtitle %}Yapay zeka destekli saldırı ve anomali analizi.{% endblock %}
 
-<div class="grid-2" style="align-items:start">
-  <!-- Sol: Tehdit Analizi -->
-  <div class="card" style="margin:0">
-    <div class="card-header"><div class="card-title">🟢 Sunucu Tehdit Analizi</div></div>
-    <div class="raid-gauge-wrap">
-      <div class="raid-gauge safe" id="raidGauge" style="width:160px;height:160px">
-        <div>
-          <div class="raid-pct" id="raidPct">12%</div>
-          <div style="font-size:.65rem;text-align:center;color:var(--text3)">RAID RİSKİ</div>
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2.5rem;">
+  <!-- Sol: Gauge -->
+  <div class="stat-card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(10,10,15,0.9) 0%,rgba(20,20,30,0.9) 100%);border:1px solid rgba(0,255,204,0.1);">
+    <div style="position:absolute;top:1.5rem;left:1.5rem;display:flex;align-items:center;gap:8px;font-weight:700;color:#fff;font-size:1rem;">
+      <i class="fas fa-microchip" style="color:#00FFCC;animation:pulse 2s infinite;"></i> Sunucu Tehdit Analizi
+    </div>
+    <div style="margin:2.5rem 0 1.5rem 0;">
+      <div style="position:relative;width:180px;height:180px;">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          <circle cx="90" cy="90" r="75" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="transparent"/>
+          <circle id="ai-risk-gauge" cx="90" cy="90" r="75" stroke="#00ffcc" stroke-width="12" fill="transparent" stroke-dasharray="471.2" stroke-dashoffset="471.2" stroke-linecap="round" transform="rotate(-90 90 90)" style="transition:stroke-dashoffset 0.8s ease,stroke 0.8s;filter:drop-shadow(0 0 8px currentColor);"/>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+          <span id="ai-risk-percentage" style="font-size:2.2rem;font-weight:800;color:#fff;">0%</span>
+          <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);margin-top:2px;">Raid Riski</div>
         </div>
       </div>
-      <div class="raid-label safe" id="raidLabel">DÜŞÜK RİSK</div>
-      <div style="font-size:.78rem;color:var(--text2);text-align:center;margin-top:6px;max-width:200px" id="raidDesc">
-        Sunucuda şüpheli bir aktivite tespit edilmedi.
-      </div>
     </div>
+    <div id="ai-threat-status" style="font-weight:700;font-size:1.1rem;color:#00ffcc;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">TETİKTEDİR & GÜVENLİ</div>
+    <p id="ai-threat-desc" style="color:var(--text-secondary);font-size:0.85rem;text-align:center;max-width:320px;margin:0;">Herhangi bir anomali tespit edilmedi.</p>
   </div>
 
   <!-- Sağ: Yapılandırma -->
-  <div class="card" style="margin:0">
-    <div class="card-header"><div class="card-title">⚙️ AI Anti-Raid Yapılandırması</div></div>
-    <div class="card-body">
-      <div class="form-group">
-        <div class="toggle-wrap" style="margin-bottom:16px">
-          <input type="checkbox" class="toggle" id="aiToggle" checked>
-          <span class="toggle-label">Yapay Zeka Koruması</span>
-        </div>
-        <div style="font-size:.78rem;color:var(--text2)">Anomali tespit motorunu aktif eder.</div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Algılama Hassasiyeti</label>
-        <div class="level-cards" style="grid-template-columns:repeat(3,1fr)">
-          <div class="level-card" onclick="setAISensitivity('low',this)"><div class="level-card-title" style="font-size:.8rem">DÜŞÜK</div></div>
-          <div class="level-card active" onclick="setAISensitivity('mid',this)"><div class="level-card-title" style="font-size:.8rem">ORTA</div></div>
-          <div class="level-card" onclick="setAISensitivity('high',this)"><div class="level-card-title" style="font-size:.8rem">YÜKSEK</div></div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Otomatik Reaksiyon Aksiyonu</label>
-        <select class="form-select">
-          <option>Sadece Log / Yetkilileri Uyar</option>
-          <option>Timeout At (5 dk)</option>
-          <option>Sunucudan At (Kick)</option>
-          <option>Sunucudan Yasakla (Ban)</option>
-        </select>
-      </div>
-
-      <button onclick="saveAISettings()" class="btn btn-full">💾 Ayarları Uygula ve Kaydet</button>
+  <div class="stat-card" style="padding:2rem;background:linear-gradient(135deg,rgba(10,10,15,0.9) 0%,rgba(20,20,30,0.9) 100%);border:1px solid rgba(255,255,255,0.05);">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;color:#fff;font-size:1.1rem;margin-bottom:1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:1rem;">
+      <i class="fas fa-sliders" style="color:#00BFFF;"></i> AI Anti-Raid Yapılandırması
     </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+        <div>
+          <span style="font-weight:600;color:#fff;display:block;">Yapay Zeka Koruması</span>
+          <span style="font-size:0.75rem;color:var(--text-secondary);">Anomali tespit motorunu aktif eder.</span>
+        </div>
+        <label class="switch"><input type="checkbox" id="ai-raid-enabled"><span class="slider"></span></label>
+      </label>
+    </div>
+    <div class="form-group" style="margin-bottom:1.5rem;">
+      <label style="font-weight:600;color:#fff;display:block;margin-bottom:8px;">Algılama Hassasiyeti</label>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn sensitivity-btn" id="ai-sens-low" onclick="setAISensitivity('low')" style="flex:1;background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.1);font-weight:600;padding:10px;">DÜŞÜK</button>
+        <button type="button" class="btn sensitivity-btn" id="ai-sens-medium" onclick="setAISensitivity('medium')" style="flex:1;background:rgba(0,191,255,0.15);color:#00BFFF;border:1px solid #00BFFF;font-weight:600;padding:10px;">ORTA</button>
+        <button type="button" class="btn sensitivity-btn" id="ai-sens-high" onclick="setAISensitivity('high')" style="flex:1;background:rgba(255,255,255,0.05);color:#fff;border:1px solid rgba(255,255,255,0.1);font-weight:600;padding:10px;">YÜKSEK</button>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:2rem;">
+      <label style="font-weight:600;color:#fff;display:block;margin-bottom:8px;">Otomatik Reaksiyon Aksiyonu</label>
+      <select id="ai-raid-action" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:8px;padding:10px;width:100%;">
+        <option value="alert">Sadece Log / Yetkilileri Uyar</option>
+        <option value="panic">Sunucuyu Otomatik Kilitle (Panic Mode)</option>
+        <option value="jail">Saldırganları Karantinaya Al (Jail)</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="saveAISettings()" style="width:100%;background:linear-gradient(135deg,#00FFCC 0%,#00BFFF 100%);border:none;font-weight:700;padding:12px;border-radius:10px;">
+      Ayarları Uygula ve Kaydet
+    </button>
   </div>
 </div>
 
-<!-- AI Analiz Raporları -->
-<div class="card">
-  <div class="card-header">
-    <div class="card-title">🔍 Yapay Zeka Saldırı Analiz Raporları</div>
-    <span style="font-size:.78rem;color:var(--text2)">Sistem tarafından engellenen veya şüpheli görülen olayların detaylı dökümleri.</span>
+<!-- AI Raporlar -->
+<div class="stat-card" style="padding:2rem;background:linear-gradient(135deg,rgba(10,10,15,0.8) 0%,rgba(15,15,25,0.8) 100%);border:1px solid rgba(255,255,255,0.05);">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.05);padding-bottom:1.5rem;margin-bottom:1.5rem;">
+    <div>
+      <h3 style="margin:0;font-size:1.25rem;font-weight:700;color:#fff;">🧠 Yapay Zeka Saldırı Analiz Raporları</h3>
+      <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px;">Engellenen veya şüpheli görülen olayların detaylı dökümleri.</p>
+    </div>
   </div>
-  <div class="card-body" id="aiReports">
-    <div class="alert-box warning">⚠️ Demo modunda çalışıyor. Gerçek bot verisi için bot çevrimiçi olmalıdır.</div>
-    <!-- Örnek raporlar -->
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--card-border);cursor:pointer" onclick="toggleReport(this)">
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="background:var(--red-bg);color:var(--red);font-size:.75rem;font-weight:800;padding:3px 8px;border-radius:6px">%82</span>
+  <div id="ai-reports-container">
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:12px 16px;font-size:0.82rem;font-weight:500;color:var(--warning-color);margin-bottom:16px;">
+      ⚠️ Demo modunda çalışıyor. Gerçek bot verisi için bot çevrimiçi olmalıdır.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(13,14,23,0.8);border-radius:8px;border:1px solid rgba(255,255,255,0.05);cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:0.75rem;font-weight:800;padding:3px 8px;border-radius:6px;">%82</span>
           <div>
-            <div style="font-weight:600;font-size:.84rem">Toplu Üye Girişi</div>
-            <div style="font-size:.72rem;color:var(--text2)">🕐 {{ config.guild_id }} • Risk algılandı</div>
+            <div style="font-weight:600;font-size:0.84rem;">Toplu Üye Girişi</div>
+            <div style="font-size:0.72rem;color:var(--text-secondary);">🕐 Güvenlik kaydı • Risk algılandı</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <span class="badge badge-red">🔴</span>
-          <span class="badge badge-gray">AI</span>
-          <span style="color:var(--text3)">›</span>
+        <div style="display:flex;gap:6px;">
+          <span style="background:rgba(239,68,68,0.12);color:#ef4444;padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;border:1px solid rgba(239,68,68,0.2);">🔴</span>
+          <span style="background:rgba(255,255,255,0.06);color:var(--text-secondary);padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;border:1px solid var(--border-color);">AI</span>
         </div>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--card-border);cursor:pointer">
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="background:var(--red-bg);color:var(--red);font-size:.75rem;font-weight:800;padding:3px 8px;border-radius:6px">%95</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:rgba(13,14,23,0.8);border-radius:8px;border:1px solid rgba(255,255,255,0.05);cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="background:rgba(239,68,68,0.15);color:#ef4444;font-size:0.75rem;font-weight:800;padding:3px 8px;border-radius:6px;">%95</span>
           <div>
-            <div style="font-weight:600;font-size:.84rem">Kötü niyetli Yetkili / Saldırı</div>
-            <div style="font-size:.72rem;color:var(--text2)">🕐 Güvenlik kaydı • Kritik seviye</div>
+            <div style="font-weight:600;font-size:0.84rem;">Kötü niyetli Yetkili / Saldırı</div>
+            <div style="font-size:0.72rem;color:var(--text-secondary);">🕐 Güvenlik kaydı • Kritik seviye</div>
           </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <span class="badge badge-red">🔴</span>
-          <span class="badge badge-gray">AI</span>
-          <span style="color:var(--text3)">›</span>
+        <div style="display:flex;gap:6px;">
+          <span style="background:rgba(239,68,68,0.12);color:#ef4444;padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;border:1px solid rgba(239,68,68,0.2);">🔴</span>
+          <span style="background:rgba(255,255,255,0.06);color:var(--text-secondary);padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;border:1px solid var(--border-color);">AI</span>
         </div>
       </div>
     </div>
@@ -103,30 +108,38 @@
 
 {% block scripts %}
 <script>
-function setAISensitivity(level,card){
-  document.querySelectorAll('.level-cards .level-card').forEach(c=>c.classList.remove('active'));
-  card.classList.add('active');
+let currentSensitivity = 'medium';
+
+function setAISensitivity(level) {
+  currentSensitivity = level;
+  document.querySelectorAll('.sensitivity-btn').forEach(b => {
+    b.style.background = 'rgba(255,255,255,0.05)'; b.style.color = '#fff'; b.style.borderColor = 'rgba(255,255,255,0.1)';
+  });
+  const active = document.getElementById('ai-sens-'+level);
+  if (active) {
+    active.style.background = level==='high'?'rgba(239,68,68,0.15)':level==='low'?'rgba(34,197,94,0.15)':'rgba(0,191,255,0.15)';
+    active.style.color = level==='high'?'#ef4444':level==='low'?'#22c55e':'#00BFFF';
+    active.style.borderColor = level==='high'?'#ef4444':level==='low'?'#22c55e':'#00BFFF';
+  }
 }
-function toggleReport(el){ el.style.opacity = el.style.opacity==='0.5'?'1':'0.5'; }
-async function saveAISettings(){
-  const enabled=document.getElementById('aiToggle').checked;
-  const r=await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'ai',values:{enabled}})});
-  const d=await r.json();
+
+async function saveAISettings() {
+  const enabled = document.getElementById('ai-raid-enabled').checked;
+  const action = document.getElementById('ai-raid-action').value;
+  const r = await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'ai',values:{enabled}})});
+  const d = await r.json();
   showToast(d.ok?'AI ayarları kaydedildi!':'Hata!',d.ok?'success':'error');
 }
 
-// Simulate risk gauge
-async function updateRisk(){
-  try {
-    const r=await fetch('/api/bot/status');
-    const d=await r.json();
-    if(!d.online){
-      document.getElementById('raidPct').textContent='?%';
-      document.getElementById('raidLabel').textContent='BOT ÇEVRİMDIŞI';
-      document.getElementById('raidGauge').className='raid-gauge warning';
-    }
-  } catch {}
-}
-updateRisk();
+// Gauge animasyonu
+fetch('/api/bot/status').then(r=>r.json()).then(d=>{
+  const risk = d.online ? 12 : 0;
+  const gauge = document.getElementById('ai-risk-gauge');
+  const pct = document.getElementById('ai-risk-percentage');
+  if (gauge) { gauge.style.strokeDashoffset = 471.2 - (471.2 * risk / 100); }
+  if (pct) pct.textContent = risk + '%';
+}).catch(()=>{});
+
+setAISensitivity('medium');
 </script>
 {% endblock %}

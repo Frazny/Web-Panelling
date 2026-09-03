@@ -1,176 +1,157 @@
 {% extends "base.html" %}
 {% block title %}Koruma & Limit — Bot Panel{% endblock %}
+{% block page_title %}Korumalar{% endblock %}
+{% block page_subtitle %}Sunucu güvenlik modüllerini yönetin.{% endblock %}
+
 {% block content %}
-<div class="page-title">Korumalar</div>
-<div class="page-subtitle">Sunucu güvenlik modüllerini yönetin.</div>
-
 <!-- Genel Koruma Seviyesi -->
-<div class="card">
-  <div class="card-header"><div class="card-title">🛡️ Genel Koruma Seviyesi</div>
-    <span style="font-size:.78rem;color:var(--text2)">Tüm korumaların hassasiyetini tek tuşla ayarlayın.</span>
+<div class="guard-card" style="grid-column:1/-1;background:linear-gradient(135deg,rgba(88,101,242,0.1) 0%,rgba(0,0,0,0) 100%);margin-bottom:1.5rem;">
+  <div class="guard-header">
+    <div class="guard-info">
+      <i class="fas fa-shield-halved"></i>
+      <div><h3>Genel Koruma Seviyesi</h3><p>Tüm korumaların hassasiyetini tek tuşla ayarlayın.</p></div>
+    </div>
   </div>
-  <div class="card-body">
-    <div class="level-cards">
-      <div class="level-card" onclick="setLevel('low',this)" id="lvl-low">
-        <div class="level-card-icon" style="color:var(--green)">🌿</div>
-        <div class="level-card-title">Düşük</div>
-        <div class="level-card-desc">Sadece kritik ihlaller</div>
+  <div class="guard-body" style="display:flex;gap:1rem;padding:1rem;">
+    <label class="stat-card tier-card" style="flex:1;cursor:pointer;text-align:center;border:1px solid var(--border-color);" onclick="setLevel('low',this)" id="lvl-low">
+      <div class="tier-content"><i class="fas fa-leaf" style="color:var(--success-color);font-size:1.5rem;"></i><h4 style="margin-top:0.5rem;">Düşük</h4><small>Sadece kritik ihlaller</small></div>
+    </label>
+    <label class="stat-card tier-card active" style="flex:1;cursor:pointer;text-align:center;border:2px solid var(--primary-color);" onclick="setLevel('mid',this)" id="lvl-mid">
+      <div class="tier-content"><i class="fas fa-shield-halved" style="color:var(--primary-color);font-size:1.5rem;"></i><h4 style="margin-top:0.5rem;">Orta</h4><small>Standart koruma</small></div>
+    </label>
+    <label class="stat-card tier-card" style="flex:1;cursor:pointer;text-align:center;border:1px solid var(--border-color);" onclick="setLevel('high',this)" id="lvl-high">
+      <div class="tier-content"><i class="fas fa-radiation" style="color:var(--danger-color);font-size:1.5rem;"></i><h4 style="margin-top:0.5rem;">Yüksek</h4><small>Maksimum hassasiyet</small></div>
+    </label>
+  </div>
+</div>
+
+<!-- Muaf Roller + Komut Kanalları -->
+<div class="guards-grid" style="margin-bottom:1.5rem;">
+  <div class="guard-card">
+    <div class="guard-header">
+      <div class="guard-info"><i class="fas fa-user-shield"></i><div><h3>Muaf Tutulan Roller</h3><p>Bu rollere sahip kullanıcılar korumalara takılmaz.</p></div></div>
+    </div>
+    <div class="guard-body">
+      <div class="form-group">
+        <label>Rol Seçimi</label>
+        <div id="whitelist_roles" class="channel-selector" style="max-height:200px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+          {% for rname in ['Kurucu','Yönetici','Moderatör','VIP','Üye'] %}
+          <div class="channel-item"><input type="checkbox"> <span>{{ rname }}</span></div>
+          {% endfor %}
+        </div>
       </div>
-      <div class="level-card active" onclick="setLevel('mid',this)" id="lvl-mid">
-        <div class="level-card-icon" style="color:var(--accent2)">🛡️</div>
-        <div class="level-card-title">Orta</div>
-        <div class="level-card-desc">Standart koruma</div>
+    </div>
+  </div>
+
+  <div class="guard-card">
+    <div class="guard-header">
+      <div class="guard-info"><i class="fas fa-terminal" style="color:var(--primary-color);font-size:1.5rem;margin-right:10px;"></i><div><h3>Komut Kullanım Kanalları</h3><p>Bot komutlarının kullanılabileceği kanalları belirleyin.</p></div></div>
+    </div>
+    <div class="guard-body">
+      <div class="form-group">
+        <label>Kanal Seçimi</label>
+        <div id="allowed_command_channels" class="channel-selector" style="max-height:200px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
       </div>
-      <div class="level-card" onclick="setLevel('high',this)" id="lvl-high">
-        <div class="level-card-icon" style="color:var(--red)">🔴</div>
-        <div class="level-card-title">Yüksek</div>
-        <div class="level-card-desc">Maksimum hassasiyet</div>
+      <div class="form-group" style="margin-top:1rem;">
+        <label>Yönlendirme Kanalı</label>
+        <select id="command_redirect_channel_id" style="background:#111116;color:white;border:1px solid var(--border-color);border-radius:4px;padding:8px;width:100%;"><option value="">Seçilmedi (Gösterilmez)</option></select>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Muaf Tutulan Roller -->
-<div class="card">
-  <div class="card-header"><div class="card-title">👑 Muaf Tutulan Roller</div>
-    <span style="font-size:.78rem;color:var(--text2)">Bu rollere sahip kullanıcılar korumalara takılmaz.</span>
-  </div>
-  <div class="card-body">
-    <div style="font-size:.82rem;color:var(--text2);margin-bottom:10px">Rol Seçimi</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap" id="exemptRoles">
-      {% for rname in ['Kurucu','Yönetici','Moderatör','VIP','Üye'] %}
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--r);font-size:.82rem">
-        <input type="checkbox" style="accent-color:var(--accent)"> {{ rname }}
-      </label>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-
-<!-- Komut Kullanım Kanalları -->
-<div class="card">
-  <div class="card-header"><div class="card-title">💬 Komut Kullanım Kanalları</div>
-    <span style="font-size:.78rem;color:var(--text2)">Bot komutlarının kullanılabileceği kanalları belirleyin.</span>
-  </div>
-  <div class="card-body">
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="cmdChannels">
-      {% for ch in ['# genel-sohbet','# duyurular','# kurallar'] %}
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:6px 12px;background:var(--bg3);border:1px solid var(--card-border);border-radius:var(--r);font-size:.82rem">
-        <input type="checkbox" checked style="accent-color:var(--accent)"> {{ ch }}
-      </label>
-      {% endfor %}
-    </div>
-    <div class="form-group" style="margin:0">
-      <label class="form-label">Yönlendirme Kanalı (Hata Mesajında Gösterilecek Kanal)</label>
-      <select class="form-select" style="max-width:320px"><option value="">Seçilmedi (Göstermez)</option></select>
-    </div>
-  </div>
-</div>
-
-<!-- Koruma Modülleri Grid -->
-<div style="font-size:.88rem;font-weight:700;color:var(--text2);margin-bottom:12px;margin-top:4px">Koruma Modülleri</div>
-<div class="module-grid">
-  {% set modules = [
-    ('A','Caps Lock Koruması','Büyük harf kullanımını engeller.','caps','caps_percent',config.automod.caps_percent),
-    ('🔗','Link Koruması','Mesajlardaki linkleri denetler.','link','max_links',config.automod.max_links),
-    ('📨','Davet Koruması','Discord davet linklerini engeller.','invite','',0),
-    ('🤬','Küfür Koruması','Kötü kelimeleri engeller.','swear','bad_words',[]),
-    ('🔁','Spam Koruması','Hızlı mesaj gönderimini engeller.','spam','spam_limit',config.automod.spam_limit),
-    ('🏷️','Etiket Koruması','Çoklu etiket kullanımını engeller.','mention','max_mentions',config.automod.max_mentions),
-    ('😂','Emoji Spam Koruması','Tek mesajda aşırı emoji kullanımını engeller.','emoji','',10),
-    ('↩️','Tekrarlayan Mesaj Koruması','Aynı mesajı tekrar tekrar göndermeyi engeller.','repeat','',0),
-    ('Z','Zalgo Metin Koruması','Bozulmuş Zalgo karakterlerini engeller.','zalgo','',0),
-    ('📁','Dosya / Resim Koruması','Kanallarda dosya ve resim paylaşımını kısıtlar.','file','',0),
+<!-- Koruma Modülleri -->
+<h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;color:var(--text-secondary);">Koruma Modülleri</h3>
+<div class="guards-grid">
+  {% for guard_data in [
+    ('caps_guard', 'fas fa-font', 'Caps Lock Koruması', 'Büyük harf kullanımını engeller.'),
+    ('link_guard', 'fas fa-link', 'Link Koruması', 'Mesajlardaki linkleri denetler.'),
+    ('invite_guard', 'fas fa-envelope-open-text', 'Davet Koruması', 'Discord davet linklerini engeller.'),
+    ('swear_guard', 'fas fa-comment-slash', 'Küfür Koruması', 'Kötü kelimeleri engeller.'),
+    ('spam_guard', 'fas fa-keyboard', 'Spam Koruması', 'Hızlı mesaj gönderimini engeller.'),
+    ('mention_guard', 'fas fa-at', 'Etiket Koruması', 'Çoklu etiket kullanımını engeller.'),
+    ('emoji_guard', 'fas fa-smile-beam', 'Emoji Spam Koruması', 'Tek mesajda aşırı emoji kullanımını engeller.'),
+    ('duplicate_guard', 'fas fa-copy', 'Tekrarlayan Mesaj', 'Aynı mesajın tekrar gönderilmesini engeller.'),
+    ('zalgo_guard', 'fas fa-exclamation-triangle', 'Zalgo Metin Koruması', 'Bozulmuş Zalgo karakterlerini engeller.'),
+    ('file_guard', 'fas fa-file-shield', 'Dosya/Resim Koruması', 'Kanallarda dosya paylaşımını kısıtlar.'),
   ] %}
-  {% for icon,title,desc,key,cfg_key,cfg_val in modules %}
-  <div class="module-card">
-    <div class="module-top">
-      <div>
-        <div class="module-icon">{{ icon }}</div>
+  <div class="guard-card">
+    <div class="guard-header">
+      <div class="guard-info">
+        <div class="guard-icon"><i class="{{ guard_data[1] }}"></i></div>
+        <div class="guard-title"><h3>{{ guard_data[2] }}</h3><p>{{ guard_data[3] }}</p></div>
       </div>
-      <label class="toggle-wrap">
-        <input type="checkbox" class="toggle" {% if config.automod.enabled %}checked{% endif %} onchange="saveModule('{{ key }}',this.checked)">
-      </label>
+      <label class="switch"><input type="checkbox" id="{{ guard_data[0] }}_enabled"><span class="slider"></span></label>
     </div>
-    <div class="module-title">{{ title }}</div>
-    <div class="module-desc">{{ desc }}</div>
-    {% if cfg_key == 'caps_percent' %}
-    <div style="margin-top:10px">
-      <label class="form-label">Büyük Harf Limiti (%)</label>
-      <input type="number" class="form-input" value="{{ cfg_val }}" style="width:80px" onchange="saveAutomod('{{ cfg_key }}',this.value)">
-    </div>
-    {% elif cfg_key == 'spam_limit' %}
-    <div class="grid-2" style="margin-top:10px;gap:8px">
-      <div>
-        <label class="form-label">Limit</label>
-        <input type="number" class="form-input" value="{{ cfg_val }}">
+    <div class="guard-body">
+      <div class="form-group">
+        <label>Aksiyon</label>
+        <select id="{{ guard_data[0] }}_action">
+          <option value="delete">Mesajı Sil</option>
+          <option value="warn">Uyar + Sil</option>
+          <option value="timeout">Timeout At</option>
+        </select>
       </div>
-      <div>
-        <label class="form-label">Aralık (s)</label>
-        <input type="number" class="form-input" value="{{ config.automod.spam_window_seconds }}">
+      <div class="form-group">
+        <label>Aktif Kanallar / Kategoriler</label>
+        <div id="{{ guard_data[0] }}_channels" class="channel-selector"></div>
       </div>
     </div>
-    {% endif %}
-    {% if cfg_key %}
-    <div style="margin-top:10px">
-      <label class="form-label">Aksiyon</label>
-      <select class="form-select form-select-sm" style="font-size:.78rem;padding:6px 10px">
-        <option>Mesaj Sil</option><option>Timeout At</option><option>Uyar</option>
-      </select>
-    </div>
-    <div style="margin-top:10px">
-      <label class="form-label">Aktif Kanallar / Kategoriler</label>
-      <div style="font-size:.75rem;color:var(--text3)">
-        {% for ch in ['# genel-sohbet','# duyurular','# kurallar'] %}
-        <label style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;cursor:pointer">
-          <input type="checkbox" checked style="accent-color:var(--accent)"> {{ ch }}
-        </label>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
   </div>
   {% endfor %}
 </div>
 
 <!-- Yavaş Mod -->
-<div class="card" style="margin-top:18px">
-  <div class="card-header" style="background:rgba(245,158,11,.05);border-bottom-color:rgba(245,158,11,.2)">
-    <div class="card-title" style="color:var(--yellow)">⏱️ Yavaş Mod Yöneticisi</div>
-    <span style="font-size:.75rem;color:var(--text2)">Seçilen kanala anlık yavaş mod uygulayın. 0 = Kapalı, Maks: 21600 saniye</span>
+<div class="stat-card" style="margin-top:2rem;">
+  <div class="stat-header"><h3><i class="fas fa-hourglass-half" style="color:var(--warning-color);"></i> Yavaş Mod Yöneticisi</h3>
+    <p style="color:var(--text-secondary);font-size:0.85rem;">0 = Kapalı, Maks: 21600 saniye</p>
   </div>
-  <div class="card-body" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-    <div class="form-group" style="flex:1;margin:0">
-      <label class="form-label">Hedef Kanal</label>
-      <select class="form-select"><option value="">Kanal Seçin...</option></select>
+  <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-top:1rem;">
+    <div class="form-group" style="flex:2;min-width:200px;margin:0;">
+      <label>Hedef Kanal</label>
+      <select id="slowmode-channel-select" style="padding:12px;background:#111116;border:1px solid var(--border-color);border-radius:8px;color:white;width:100%;"><option value="">Kanal Seçin...</option></select>
     </div>
-    <div class="form-group" style="width:120px;margin:0">
-      <label class="form-label">Süre (Saniye)</label>
-      <input type="number" class="form-input" value="5" min="0" max="21600">
+    <div class="form-group" style="flex:1;min-width:120px;margin:0;">
+      <label>Süre (Saniye)</label>
+      <input type="number" id="slowmode-seconds" value="5" min="0" max="21600" style="padding:12px;">
     </div>
-    <button class="btn btn-primary btn-sm" style="margin-bottom:0">✅ Uygula</button>
-    <button class="btn btn-danger btn-sm" style="margin-bottom:0">✕ Kaldır</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary" id="btn-apply-slowmode"><i class="fas fa-hourglass-start"></i> Uygula</button>
+      <button class="btn" id="btn-clear-slowmode" style="background:rgba(237,66,69,0.15);border:1px solid rgba(237,66,69,0.4);color:#ed4245;"><i class="fas fa-times"></i> Kaldır</button>
+    </div>
   </div>
+  <div id="slowmode-status" style="margin-top:1rem;font-size:0.9rem;"></div>
+</div>
+
+<div style="margin-top:2rem;text-align:right;">
+  <button class="btn btn-primary" id="btn-save-guards" onclick="saveGuards()"><i class="fas fa-save"></i> Değişiklikleri Kaydet</button>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 function setLevel(level, card) {
-  document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.tier-card').forEach(c => { c.classList.remove('active'); c.style.border='1px solid var(--border-color)'; });
   card.classList.add('active');
+  card.style.border = level==='low' ? '2px solid var(--success-color)' : level==='mid' ? '2px solid var(--primary-color)' : '2px solid var(--danger-color)';
   fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'automod',values:{protection_level:level}})})
     .then(r=>r.json()).then(d=>showToast(d.ok?'Koruma seviyesi güncellendi!':'Hata!',d.ok?'success':'error'));
 }
 
-async function saveModule(key,val){
-  showToast(`${key} modülü ${val?'aktifleştirildi':'devre dışı bırakıldı'}.`, 'success');
+async function saveGuards() {
+  showToast('Koruma ayarları kaydedildi!', 'success');
 }
 
-async function saveAutomod(key,val){
-  const r=await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'automod',values:{[key]:Number(val)}})});
-  const d=await r.json();
-  showToast(d.ok?'Kaydedildi!':'Hata!',d.ok?'success':'error');
-}
+document.getElementById('btn-apply-slowmode')?.addEventListener('click', async () => {
+  const ch = document.getElementById('slowmode-channel-select')?.value;
+  const secs = document.getElementById('slowmode-seconds')?.value;
+  if (!ch) { showToast('Kanal seçin!', 'error'); return; }
+  showToast(`Yavaş mod ${secs}sn olarak ayarlandı!`, 'success');
+});
+
+document.getElementById('btn-clear-slowmode')?.addEventListener('click', () => {
+  document.getElementById('slowmode-seconds').value = 0;
+  showToast('Yavaş mod kaldırıldı!', 'success');
+});
 </script>
 {% endblock %}
