@@ -32,16 +32,19 @@ ALL_COGS = [
 
 # __file__ her zaman panel/app.py'yi gösterir — template/static dizinlerini buna göre belirt
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
+CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
+DB_PATH = os.path.join(BOT_DIR, "data", "bot.db")
 
 app = Flask(
     __name__,
     template_folder=os.path.join(_BASE_DIR, "templates"),
     static_folder=os.path.join(_BASE_DIR, "static"),
 )
-# SECRET_KEY env'den okunur; yoksa sabit bir fallback kullanılır (production'da env'den set et)
+# SECRET_KEY env'den okunur; yoksa sabit bir fallback kullanılır
 app.secret_key = os.environ.get("SECRET_KEY", "frazny-panel-secret-do-not-use-in-prod-32x")
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = False  # http üzerinde çalışmak için
+app.config["SESSION_COOKIE_SECURE"] = False
 
 # Filesystem session — cookie yerine sunucuda sakla
 _SESSION_DIR = os.path.join(BOT_DIR, "data", "flask_sessions")
@@ -51,10 +54,6 @@ app.config["SESSION_FILE_DIR"] = _SESSION_DIR
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7  # 7 gün
 Session(app)
-
-BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
-CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
-DB_PATH = os.path.join(BOT_DIR, "data", "bot.db")
 
 DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
