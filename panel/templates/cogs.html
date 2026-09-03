@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Cog Yönetimi - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🧩 Cog Yönetimi</h1>
+  <div class="header-actions">
+    <button onclick="loadCogs()" class="btn btn-sm">🔄 Yenile</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>🧩 Yüklü Cog'lar</h2>
+  </div>
+  <div class="card-body">
+    <div class="alert alert-warning" style="margin-bottom:16px">
+      ⚠️ Cog reload işlemi botu etkiler. Dikkatli kullanın.
+    </div>
+    <div id="cogList" class="cog-grid">
+      <div class="empty-state">Yükleniyor...</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>📋 İşlem Geçmişi</h2></div>
+  <div class="card-body" style="padding:0">
+    <div id="cogLog" style="padding:16px;font-family:monospace;font-size:.85rem;color:var(--text-muted);max-height:200px;overflow-y:auto">
+      Henüz işlem yapılmadı.
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cogLogLines = [];
+
+function addLog(msg, ok=true) {
+  const now = new Date().toLocaleTimeString('tr-TR');
+  const color = ok ? 'var(--success)' : 'var(--danger)';
+  cogLogLines.push(`<span style="color:var(--text-muted)">[${now}]</span> <span style="color:${color}">${msg}</span>`);
+  const el = document.getElementById('cogLog');
+  el.innerHTML = cogLogLines.join('<br>');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function loadCogs() {
+  const r = await fetch('/api/cogs');
+  const d = await r.json();
+  const container = document.getElementById('cogList');
+  if (!d.cogs || d.cogs.length === 0) {
+    container.innerHTML = '<div class="empty-state">Cog bulunamadı</div>';
+    return;
+  }
+  container.innerHTML = d.cogs.map(cog => `
+    <div class="cog-card ${cog.loaded ? 'cog-loaded' : 'cog-unloaded'}">
+      <div class="cog-info">
+        <div class="cog-icon">${cog.loaded ? '✅' : '❌'}</div>
+        <div>
+          <div class="cog-name">${cog.name}</div>
+          <div class="cog-status">${cog.loaded ? 'Yüklü' : 'Yüklü Değil'}</div>
+        </div>
+      </div>
+      <div class="cog-actions">
+        ${cog.loaded ? `
+          <button onclick="reloadCog('${cog.name}')" class="btn btn-warning btn-xs">🔄 Reload</button>
+          <button onclick="unloadCog('${cog.name}')" class="btn btn-danger btn-xs">⏏️ Unload</button>
+        ` : `
+          <button onclick="loadCog('${cog.name}')" class="btn btn-primary btn-xs">▶️ Load</button>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function reloadCog(name) {
+  const r = await fetch('/api/cogs/reload', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ cog: name })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    showToast(`${name} yeniden yüklendi!`, 'success');
+    addLog(`✅ ${name} reload edildi.`, true);
+  } else {
+    showToast('Hata: ' + (d.error || '?'), 'error');
+    addLog(`❌ ${name} reload hatası: ${d.error}`, false);
+  }
+  loadCogs();
+}
+
+async function unloadCog(name) {
+  if (!confirm(`${name} cog'unu kaldırmak istediğine emin misin?`)) return;
+  const r = await fetch('/api/cogs/unload', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ cog: name })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    showToast(`${name} kaldırıldı!`, 'success');
+    addLog(`⏏️ ${name} unload edildi.`, true);
+  } else {
+    showToast('Hata: ' + (d.error || '?'), 'error');
+    addLog(`❌ ${name} unload hatası: ${d.error}`, false);
+  }
+  loadCogs();
+}
+
+async function loadCog(name) {
+  const r = await fetch('/api/cogs/load', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ cog: name })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    showToast(`${name} yüklendi!`, 'success');
+    addLog(`▶️ ${name} load edildi.`, true);
+  } else {
+    showToast('Hata: ' + (d.error || '?'), 'error');
+    addLog(`❌ ${name} load hatası: ${d.error}`, false);
+  }
+  loadCogs();
+}
+
+loadCogs();
+</script>
+{% endblock %}

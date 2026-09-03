@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Üye Yönetimi - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>👥 Üye Yönetimi</h1>
+</div>
+
+<!-- Arama -->
+<div class="card">
+  <div class="card-header"><h2>🔍 Üye Sorgula</h2></div>
+  <div class="card-body">
+    <div class="search-row">
+      <input type="text" id="memberIdInput" class="form-input" placeholder="Kullanıcı ID girin..." style="max-width:320px">
+      <button onclick="loadMember()" class="btn btn-primary">Sorgula</button>
+    </div>
+    <div id="memberResult" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<!-- Whitelist / Blacklist Yönetimi -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>✅ Whitelist</h2>
+      <button onclick="loadWhitelist()" class="btn btn-sm">🔄</button>
+    </div>
+    <div class="card-body">
+      <div class="search-row" style="margin-bottom:12px">
+        <input type="text" id="whitelistAddId" class="form-input" placeholder="Kullanıcı ID..." style="max-width:220px">
+        <button onclick="addWhitelist()" class="btn btn-primary btn-sm">Ekle</button>
+      </div>
+      <div id="whitelistList"><div class="empty-state">Yükleniyor...</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+      <h2>🚫 Blacklist</h2>
+      <button onclick="loadBlacklist()" class="btn btn-sm">🔄</button>
+    </div>
+    <div class="card-body">
+      <div class="search-row" style="margin-bottom:12px">
+        <input type="text" id="blacklistAddId" class="form-input" placeholder="Kullanıcı ID..." style="max-width:220px">
+        <button onclick="addBlacklist()" class="btn btn-danger btn-sm">Ekle</button>
+      </div>
+      <div id="blacklistList"><div class="empty-state">Yükleniyor...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editMemberModal" class="modal" style="display:none">
+  <div class="modal-backdrop" onclick="closeModal('editMemberModal')"></div>
+  <div class="modal-box" style="min-width:400px">
+    <div class="modal-header">
+      <h3 id="editModalTitle">Düzenle</h3>
+      <button onclick="closeModal('editMemberModal')" class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="editModalContent"></div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('editMemberModal')" class="btn btn-secondary">İptal</button>
+      <button onclick="submitEdit()" class="btn btn-primary" id="editSubmitBtn">💾 Kaydet</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentEditType = '';
+let currentEditUserId = '';
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatDate(ts) {
+  if (!ts) return '-';
+  return new Date(ts * 1000).toLocaleString('tr-TR');
+}
+
+async function loadMember() {
+  const uid = document.getElementById('memberIdInput').value.trim();
+  if (!uid) return;
+  const res = document.getElementById('memberResult');
+  res.innerHTML = '<div style="color:var(--text-muted)">Yükleniyor...</div>';
+
+  const r = await fetch(`/api/members/${uid}`);
+  const d = await r.json();
+
+  if (d.error) {
+    res.innerHTML = `<div class="empty-state">${d.error}</div>`;
+    return;
+  }
+
+  res.innerHTML = `
+    <div class="grid-2" style="margin-bottom:0">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><h2>📊 Level & XP</h2></div>
+        <div class="card-body">
+          <div class="info-row"><span class="info-label">XP</span><span class="info-value">${d.xp ?? 0}</span></div>
+          <div class="info-row"><span class="info-label">Mesaj Sayısı</span><span class="info-value">${d.messages ?? 0}</span></div>
+          <div class="info-row"><span class="info-label">Ses Süresi</span><span class="info-value">${Math.floor((d.voice_seconds ?? 0) / 60)} dk</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button onclick="openEditModal('xp', '${uid}', ${d.xp ?? 0})" class="btn btn-primary btn-sm">✏️ XP Düzenle</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header"><h2>💰 Ekonomi</h2></div>
+        <div class="card-body">
+          <div class="info-row"><span class="info-label">Bakiye</span><span class="info-value">${d.balance ?? 0} 💵</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button onclick="openEditModal('balance', '${uid}', ${d.balance ?? 0})" class="btn btn-primary btn-sm">✏️ Bakiye Düzenle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;margin-bottom:0">
+      <div class="card-header"><h2>⚠️ Warnlar (${d.warns?.length ?? 0})</h2></div>
+      <div class="card-body" style="padding:0">
+        ${d.warns && d.warns.length > 0 ?
+          `<table class="data-table">
+            <thead><tr><th>#</th><th>Mod</th><th>Sebep</th><th>Tarih</th><th>İşlem</th></tr></thead>
+            <tbody>${d.warns.map(w => `
+              <tr>
+                <td>${w.id}</td>
+                <td><code>${w.mod_id}</code></td>
+                <td>${escHtml(w.reason)}</td>
+                <td>${formatDate(w.created)}</td>
+                <td><button onclick="deleteSingleWarn(${w.id})" class="btn btn-danger btn-xs">Sil</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` :
+          '<div class="empty-state">Warn yok</div>'
+        }
+      </div>
+    </div>
+  `;
+}
+
+async function deleteSingleWarn(warnId) {
+  if (!confirm('Bu warni silmek istediğine emin misin?')) return;
+  const r = await fetch(`/api/moderation/warns/${warnId}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (d.ok) { showToast('Warn silindi!', 'success'); loadMember(); }
+  else showToast('Hata!', 'error');
+}
+
+function openEditModal(type, uid, currentVal) {
+  currentEditType = type;
+  currentEditUserId = uid;
+  const title = document.getElementById('editModalTitle');
+  const content = document.getElementById('editModalContent');
+  if (type === 'xp') {
+    title.textContent = '✏️ XP Düzenle';
+    content.innerHTML = `
+      <div class="form-group">
+        <label>Yeni XP Değeri</label>
+        <input type="number" id="editValue" class="form-input" value="${currentVal}" min="0">
+      </div>`;
+  } else if (type === 'balance') {
+    title.textContent = '✏️ Bakiye Düzenle';
+    content.innerHTML = `
+      <div class="form-group">
+        <label>Yeni Bakiye</label>
+        <input type="number" id="editValue" class="form-input" value="${currentVal}" min="0">
+      </div>`;
+  }
+  document.getElementById('editMemberModal').style.display = 'flex';
+}
+
+async function submitEdit() {
+  const val = document.getElementById('editValue').value;
+  if (val === '' || val === null) return;
+  const r = await fetch(`/api/members/${currentEditUserId}/edit`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ type: currentEditType, value: Number(val) })
+  });
+  const d = await r.json();
+  if (d.ok) {
+    showToast('Kaydedildi!', 'success');
+    closeModal('editMemberModal');
+    loadMember();
+  } else showToast('Hata: ' + (d.error || '?'), 'error');
+}
+
+async function loadWhitelist() {
+  const r = await fetch('/api/members/whitelist');
+  const d = await r.json();
+  const el = document.getElementById('whitelistList');
+  if (!d.list || d.list.length === 0) { el.innerHTML = '<div class="empty-state">Boş</div>'; return; }
+  el.innerHTML = d.list.map(uid => `
+    <div class="tag-item">
+      <code>${uid}</code>
+      <button onclick="removeWhitelist('${uid}')" class="btn btn-danger btn-xs">✕</button>
+    </div>`).join('');
+}
+
+async function addWhitelist() {
+  const uid = document.getElementById('whitelistAddId').value.trim();
+  if (!uid) return;
+  const r = await fetch('/api/members/whitelist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({user_id: uid}) });
+  const d = await r.json();
+  if (d.ok) { showToast('Eklendi!', 'success'); document.getElementById('whitelistAddId').value = ''; loadWhitelist(); }
+  else showToast('Hata!', 'error');
+}
+
+async function removeWhitelist(uid) {
+  const r = await fetch(`/api/members/whitelist/${uid}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (d.ok) { showToast('Kaldırıldı!', 'success'); loadWhitelist(); }
+}
+
+async function loadBlacklist() {
+  const r = await fetch('/api/members/blacklist');
+  const d = await r.json();
+  const el = document.getElementById('blacklistList');
+  if (!d.list || d.list.length === 0) { el.innerHTML = '<div class="empty-state">Boş</div>'; return; }
+  el.innerHTML = d.list.map(uid => `
+    <div class="tag-item">
+      <code>${uid}</code>
+      <button onclick="removeBlacklist('${uid}')" class="btn btn-danger btn-xs">✕</button>
+    </div>`).join('');
+}
+
+async function addBlacklist() {
+  const uid = document.getElementById('blacklistAddId').value.trim();
+  if (!uid) return;
+  const r = await fetch('/api/members/blacklist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({user_id: uid}) });
+  const d = await r.json();
+  if (d.ok) { showToast('Eklendi!', 'success'); document.getElementById('blacklistAddId').value = ''; loadBlacklist(); }
+  else showToast('Hata!', 'error');
+}
+
+async function removeBlacklist(uid) {
+  const r = await fetch(`/api/members/blacklist/${uid}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (d.ok) { showToast('Kaldırıldı!', 'success'); loadBlacklist(); }
+}
+
+loadWhitelist();
+loadBlacklist();
+</script>
+{% endblock %}

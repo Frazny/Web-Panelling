@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Loglar - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>📋 Loglar</h1>
+  <div class="header-actions">
+    <label class="toggle-label" style="margin-right:8px">
+      <input type="checkbox" id="autoRefreshToggle" checked onchange="toggleAutoRefresh()">
+      <span style="font-size:.85rem">Otomatik Yenile</span>
+    </label>
+    <button onclick="clearLogView()" class="btn btn-sm btn-secondary">🗑️ Temizle</button>
+    <button onclick="loadBotLog()" class="btn btn-sm">🔄 Yenile</button>
+  </div>
+</div>
+
+<!-- Log Kanalları Bilgisi -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h2>📋 Log Kanalları</h2></div>
+    <div class="card-body">
+      <div class="info-row">
+        <span class="info-label">Guard Log</span>
+        <span class="info-value"><code>{{ config.guard_log_channel or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Mod Log</span>
+        <span class="info-value"><code>{{ config.moderation.mod_log_channel or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Bot Log</span>
+        <span class="info-value"><code>{{ config.levels.bot_log_channel or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Tag Log</span>
+        <span class="info-value"><code>{{ config.tag_log.log_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h2>🔊 Ses Logları</h2></div>
+    <div class="card-body">
+      {% set guild_cfg = config.get('guilds', {}).get(config.guild_id|string, {}) %}
+      {% set logs = guild_cfg.get('logs', {}) %}
+      <div class="info-row">
+        <span class="info-label">Ses Kanal</span>
+        <span class="info-value"><code>{{ logs.voice_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Cezalı Kanal</span>
+        <span class="info-value"><code>{{ logs.punish_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Rol Kanal</span>
+        <span class="info-value"><code>{{ logs.role_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Giriş Kanal</span>
+        <span class="info-value"><code>{{ logs.join_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Çıkış Kanal</span>
+        <span class="info-value"><code>{{ logs.leave_channel_id or 'Ayarlanmamış' }}</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Canlı Log Görüntüleyici -->
+<div class="card">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>🖥️ Bot Log Dosyası (Canlı)</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="logFileSelect" class="form-input" style="width:auto;padding:6px 12px;font-size:.8rem" onchange="loadBotLog()">
+        <option value="bot_out">bot_out.log</option>
+        <option value="bot_err">bot_err.log</option>
+      </select>
+      <select id="logLinesSelect" class="form-input" style="width:auto;padding:6px 12px;font-size:.8rem" onchange="loadBotLog()">
+        <option value="100">Son 100 satır</option>
+        <option value="200">Son 200 satır</option>
+        <option value="500">Son 500 satır</option>
+      </select>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <div id="logViewer" class="log-viewer">
+      <div style="color:var(--text-muted);text-align:center;padding:40px">Yükleniyor...</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let autoRefreshInterval = null;
+let lastLogSize = 0;
+
+function colorizeLog(line) {
+  const esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  if (/ERROR|CRITICAL|Traceback|Exception/i.test(esc)) return `<span class="log-error">${esc}</span>`;
+  if (/WARNING|WARN/i.test(esc)) return `<span class="log-warn">${esc}</span>`;
+  if (/INFO/i.test(esc)) return `<span class="log-info">${esc}</span>`;
+  if (/DEBUG/i.test(esc)) return `<span class="log-debug">${esc}</span>`;
+  return esc;
+}
+
+async function loadBotLog() {
+  const file = document.getElementById('logFileSelect').value;
+  const lines = document.getElementById('logLinesSelect').value;
+  const r = await fetch(`/api/logs/file?file=${file}&lines=${lines}`);
+  const d = await r.json();
+  const viewer = document.getElementById('logViewer');
+  if (d.error) {
+    viewer.innerHTML = `<div style="color:var(--danger);padding:16px">${d.error}</div>`;
+    return;
+  }
+  if (!d.content || d.content.trim() === '') {
+    viewer.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px">Log dosyası boş</div>';
+    return;
+  }
+  const html = d.content.split('\n').map(colorizeLog).join('\n');
+  viewer.innerHTML = `<pre class="log-pre">${html}</pre>`;
+  viewer.scrollTop = viewer.scrollHeight;
+}
+
+function clearLogView() {
+  document.getElementById('logViewer').innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:40px">Görüntü temizlendi. Yenilemek için butona basın.</div>';
+}
+
+function toggleAutoRefresh() {
+  const checked = document.getElementById('autoRefreshToggle').checked;
+  if (checked) {
+    autoRefreshInterval = setInterval(loadBotLog, 5000);
+  } else {
+    clearInterval(autoRefreshInterval);
+  }
+}
+
+// Init
+loadBotLog();
+autoRefreshInterval = setInterval(loadBotLog, 5000);
+</script>
+{% endblock %}

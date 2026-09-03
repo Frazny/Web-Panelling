@@ -1,0 +1,21 @@
+# Güvenlik: token ve veritabanı asla git'e gönderilmemeli
+config.json
+.env
+data/
+*.db
+
+# Bot çalışma dosyaları
+restart.flag
+bot_out.log
+bot_err.log
+bot.log
+bot.err.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Test / geçici
+tests/__pycache__/

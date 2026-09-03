@@ -1,0 +1,135 @@
+🧪 **Komut Testi — 110/134 gecti**
+✅ `cog-yukleme cogs.guard`
+✅ `cog-yukleme cogs.moderation`
+✅ `cog-yukleme cogs.registration`
+✅ `cog-yukleme cogs.welcome`
+✅ `cog-yukleme cogs.levels`
+✅ `cog-yukleme cogs.invites`
+✅ `cog-yukleme cogs.tickets`
+✅ `cog-yukleme cogs.interface`
+✅ `cog-yukleme cogs.music`
+✅ `cog-yukleme cogs.economy`
+✅ `cog-yukleme cogs.logging`
+✅ `cog-yukleme cogs.utility`
+✅ `cog-yukleme cogs.rolemenu`
+✅ `cog-yukleme cogs.social`
+✅ `cog-yukleme cogs.management`
+✅ `cog-yukleme cogs.voice_keep`
+✅ `cog-yukleme cogs.automod`
+✅ `cog-yukleme cogs.emoji`
+✅ `/guard lockdown`
+✅ `/guard unlock`
+✅ `/guard restore`
+✅ `/snapshot`
+✅ `/guardlog`
+✅ `/wl add`
+✅ `/wl remove`
+✅ `/wl list`
+✅ `/protect add`
+✅ `/protect remove`
+✅ `/protect list`
+❌ `/ban` — AttributeError: 'str' object has no attribute 'top_role'
+❌ `/kick` — AttributeError: 'str' object has no attribute 'top_role'
+❌ `/mute` — AttributeError: 'str' object has no attribute 'top_role'
+❌ `/unmute` — AttributeError: 'str' object has no attribute 'timeout'
+❌ `/warn` — AttributeError: 'str' object has no attribute 'id'
+❌ `/warnings` — AttributeError: 'str' object has no attribute 'id'
+❌ `/clearwarns` — AttributeError: 'str' object has no attribute 'id'
+✅ `/purge`
+✅ `/kayit`
+❌ `/kayitsiz` — AttributeError: 'str' object has no attribute 'mention'
+❌ `/level` — AttributeError: 'str' object has no attribute 'id'
+✅ `/top`
+❌ `/invites` — AttributeError: 'str' object has no attribute 'id'
+✅ `/topinvites`
+✅ `/ticketpanel`
+✅ `/ticketclose`
+✅ `/komutlar`
+✅ `/play`
+✅ `/çal`
+✅ `/ekle`
+✅ `/ara`
+✅ `/kuyruk`
+✅ `/skip`
+✅ `/stop`
+✅ `/pause`
+✅ `/devam`
+✅ `/karistir`
+✅ `/dongu`
+✅ `/ses`
+✅ `/sohbet`
+✅ `/leave`
+✅ `/nowplaying`
+✅ `/lyrics`
+✅ `/kaldır`
+✅ `/atla`
+✅ `/temizle`
+❌ `/bakiye` — AttributeError: 'str' object has no attribute 'id'
+✅ `/gunluk`
+✅ `/haftalik`
+✅ `/is`
+❌ `/casino` — TypeError: '>' not supported between instances of 'str' and 'int'
+❌ `/transfer` — AttributeError: 'str' object has no attribute 'bot'
+✅ `/toppara`
+❌ `/logkanal` — AttributeError: 'str' object has no attribute 'id'
+✅ `/snipe`
+✅ `/ping`
+✅ `/uptime`
+❌ `/avatar` — AttributeError: 'str' object has no attribute 'display_name'
+❌ `/banner` — AttributeError: 'str' object has no attribute 'id'
+❌ `/userinfo` — AttributeError: 'str' object has no attribute 'display_name'
+✅ `/serverinfo`
+❌ `/roleinfo` — AttributeError: 'str' object has no attribute 'name'
+✅ `/embed`
+✅ `/afk`
+✅ `/hesapla`
+✅ `/8ball`
+✅ `/yazitura`
+✅ `/tkm`
+✅ `/şaka`
+✅ `/hatirlat`
+❌ `/rolpanel` — AttributeError: 'str' object has no attribute 'mention'
+✅ `/rolekle`
+✅ `/anket`
+✅ `/cekilis süre=5dk`
+✅ `/oneri`
+❌ `/oneri_kanal` — AttributeError: 'str' object has no attribute 'id'
+✅ `/onayla`
+✅ `/reddet`
+✅ `/etiket`
+✅ `/etiket_sil`
+✅ `/etiketler`
+✅ `/etiket_goster`
+✅ `/slowmode`
+✅ `/kilit`
+✅ `/kilitac`
+❌ `/tempban süre=5dk` — AttributeError: 'str' object has no attribute 'ban'
+❌ `/tempmute süre=5dk` — AttributeError: 'str' object has no attribute 'add_roles'
+❌ `/sayac` — AttributeError: 'str' object has no attribute 'name'
+❌ `/duyuru` — AttributeError: 'str' object has no attribute 'mention'
+✅ `/yasakkelime`
+✅ `/yasakkelime_sil`
+✅ `/yasakkelime_liste`
+✅ `/raid`
+✅ `/emojiler:kur`
+✅ `/emojiler:temizle`
+✅ `/emojiler:liste`
+✅ `!leave`
+✅ `!komutlar`
+✅ `!nowplaying`
+✅ `!lyrics`
+✅ `!kuyruk`
+✅ `!temizle`
+✅ `!kaldır`
+✅ `!skip`
+✅ `!stop`
+✅ `!atla`
+✅ `!pause`
+✅ `!play`
+✅ `!devam`
+✅ `!ara`
+✅ `!karistir`
+✅ `!ekle`
+✅ `!dongu`
+✅ `!ses`
+✅ `!sohbet`

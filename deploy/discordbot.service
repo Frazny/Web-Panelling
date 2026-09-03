@@ -1,0 +1,19 @@
+[Unit]
+Description=Discord Bot (24/7)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=discordbot
+Group=discordbot
+WorkingDirectory=/opt/discordbot
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/discordbot/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Seviyeler - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>🏆 Seviye Liderlik Tablosu</h1>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Kullanıcı ID</th>
+          <th>XP</th>
+          <th>Mesaj</th>
+          <th>Ses (dk)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in leaderboard %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><code>{{ member.user_id }}</code></td>
+          <td>{{ member.xp }}</td>
+          <td>{{ member.messages }}</td>
+          <td>{{ (member.voice_seconds // 60) }}</td>
+        </tr>
+        {% endfor %}
+        {% if not leaderboard %}
+        <tr><td colspan="5" class="empty-state">Veri bulunamadı</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+{% block title %}Ayarlar - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>⚙️ Ayarlar</h1>
+</div>
+
+<div class="settings-layout">
+  <div class="settings-nav">
+    <a href="/settings?section=general" class="settings-nav-link {{ 'active' if section == 'general' }}">🔧 Genel</a>
+    <a href="/settings?section=welcome" class="settings-nav-link {{ 'active' if section == 'welcome' }}">👋 Hoşgeldin</a>
+    <a href="/settings?section=registration" class="settings-nav-link {{ 'active' if section == 'registration' }}">📝 Kayıt</a>
+    <a href="/settings?section=moderation" class="settings-nav-link {{ 'active' if section == 'moderation' }}">🛡️ Moderasyon</a>
+    <a href="/settings?section=levels" class="settings-nav-link {{ 'active' if section == 'levels' }}">🏆 Seviyeler</a>
+    <a href="/settings?section=economy" class="settings-nav-link {{ 'active' if section == 'economy' }}">💰 Ekonomi</a>
+    <a href="/settings?section=tickets" class="settings-nav-link {{ 'active' if section == 'tickets' }}">🎫 Ticketler</a>
+    <a href="/settings?section=automod" class="settings-nav-link {{ 'active' if section == 'automod' }}">🤖 Otomod</a>
+    <a href="/settings?section=ai" class="settings-nav-link {{ 'active' if section == 'ai' }}">🧠 AI Chat</a>
+    <a href="/settings?section=guard" class="settings-nav-link {{ 'active' if section == 'guard' }}">🛡️ Guard</a>
+    <a href="/settings?section=taglog" class="settings-nav-link {{ 'active' if section == 'taglog' }}">🏷️ Tag Log</a>
+    <a href="/settings?section=music" class="settings-nav-link {{ 'active' if section == 'music' }}">🎵 Müzik</a>
+    <a href="/settings?section=voice" class="settings-nav-link {{ 'active' if section == 'voice' }}">🔊 Ses 24/7</a>
+    <a href="/settings?section=gender" class="settings-nav-link {{ 'active' if section == 'gender' }}">⚧ Cinsiyet</a>
+  </div>
+
+  <div class="settings-content">
+    {# ===== GENEL ===== #}
+    {% if section == 'general' %}
+    <div class="card">
+      <div class="card-header"><h2>🔧 Genel Ayarlar</h2></div>
+      <div class="card-body">
+        <form id="settingsForm">
+          <div class="form-group">
+            <label>Prefix</label>
+            <input type="text" name="prefix" value="{{ config.prefix }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Guild ID</label>
+            <input type="text" name="guild_id" value="{{ config.guild_id }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Bot User ID</label>
+            <input type="text" name="bot_user_id" value="{{ config.bot_user_id }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Owner ID</label>
+            <input type="text" name="owner_id" value="{{ config.owner_id }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== WELCOME ===== #}
+    {% if section == 'welcome' %}
+    <div class="card">
+      <div class="card-header"><h2>👋 Hoşgeldin Ayarları</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="welcome">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.welcome.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Kanal ID</label>
+            <input type="text" name="channel_id" value="{{ config.welcome.channel_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Mesaj</label>
+            <textarea name="message" class="form-input" rows="3">{{ config.welcome.message }}</textarea>
+            <span class="form-hint">Değişkenler: {user}, {count}</span>
+          </div>
+          <div class="form-group">
+            <label>Otomatik Rol ID</label>
+            <input type="text" name="auto_role_id" value="{{ config.welcome.auto_role_id or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== REGISTRATION ===== #}
+    {% if section == 'registration' %}
+    <div class="card">
+      <div class="card-header"><h2>📝 Kayıt Sistemi</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="registration">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.registration.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Staff Rol ID</label>
+            <input type="text" name="staff_role_id" value="{{ config.registration.staff_role_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Kayıtlı Rol ID</label>
+            <input type="text" name="registered_role_id" value="{{ config.registration.registered_role_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Kanal ID</label>
+            <input type="text" name="channel_id" value="{{ config.registration.channel_id or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== MODERATION ===== #}
+    {% if section == 'moderation' %}
+    <div class="card">
+      <div class="card-header"><h2>🛡️ Moderasyon</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="moderation">
+          <div class="form-group">
+            <label>Mod Log Kanal ID</label>
+            <input type="text" name="mod_log_channel" value="{{ config.moderation.mod_log_channel or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== LEVELS ===== #}
+    {% if section == 'levels' %}
+    <div class="card">
+      <div class="card-header"><h2>🏆 Seviye Sistemi</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="levels">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.levels.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Mesaj Başına XP</label>
+            <input type="number" name="xp_per_message" value="{{ config.levels.xp_per_message }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Cooldown (saniye)</label>
+            <input type="number" name="cooldown_seconds" value="{{ config.levels.cooldown_seconds }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Bot Log Kanal ID</label>
+            <input type="text" name="bot_log_channel" value="{{ config.levels.bot_log_channel or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== ECONOMY ===== #}
+    {% if section == 'economy' %}
+    <div class="card">
+      <div class="card-header"><h2>💰 Ekonomi</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="economy">
+          <div class="form-group">
+            <label>Başlangıç Bakiyesi</label>
+            <input type="number" name="start_balance" value="{{ config.economy.start_balance }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Günlük Ödül</label>
+            <input type="number" name="daily" value="{{ config.economy.daily }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Haftalık Ödül</label>
+            <input type="number" name="weekly" value="{{ config.economy.weekly }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== TICKETS ===== #}
+    {% if section == 'tickets' %}
+    <div class="card">
+      <div class="card-header"><h2>🎫 Ticket Sistemi</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="tickets">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.tickets.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Kanal ID</label>
+            <input type="text" name="channel_id" value="{{ config.tickets.channel_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Kategori ID</label>
+            <input type="text" name="category_id" value="{{ config.tickets.category_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Destek Rol ID</label>
+            <input type="text" name="support_role_id" value="{{ config.tickets.support_role_id or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== AUTOMOD ===== #}
+    {% if section == 'automod' %}
+    <div class="card">
+      <div class="card-header"><h2>🤖 Otomod</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="automod">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.automod.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Maks Link (0 = sınırsız)</label>
+            <input type="number" name="max_links" value="{{ config.automod.max_links }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Maks Mention</label>
+            <input type="number" name="max_mentions" value="{{ config.automod.max_mentions }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Büyük Harf Yüzdesi (%)</label>
+            <input type="number" name="caps_percent" value="{{ config.automod.caps_percent }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Spam Limit</label>
+            <input type="number" name="spam_limit" value="{{ config.automod.spam_limit }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Spam Penceresi (sn)</label>
+            <input type="number" name="spam_window_seconds" value="{{ config.automod.spam_window_seconds }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== AI ===== #}
+    {% if section == 'ai' %}
+    <div class="card">
+      <div class="card-header"><h2>🧠 AI Chat</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="ai">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.ai.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" name="api_key" value="{{ config.ai.api_key }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" name="model" value="{{ config.ai.model }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Model Adı</label>
+            <input type="text" name="model_name" value="{{ config.ai.model_name }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Trigger</label>
+            <select name="trigger" class="form-input">
+              <option value="mention" {{ 'selected' if config.ai.trigger == 'mention' }}>Mention</option>
+              <option value="always" {{ 'selected' if config.ai.trigger == 'always' }}>Her Mesaj</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cooldown (sn)</label>
+            <input type="number" name="cooldown_seconds" value="{{ config.ai.cooldown_seconds }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Sistem Prompt</label>
+            <textarea name="system_prompt" class="form-input" rows="4">{{ config.ai.system_prompt }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== GUARD ===== #}
+    {% if section == 'guard' %}
+    <div class="card">
+      <div class="card-header"><h2>🛡️ Guard / Anti-Nuke</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="anti_nuke">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.anti_nuke.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Eşik (Threshold)</label>
+            <input type="number" name="threshold" value="{{ config.anti_nuke.threshold }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Pencere (saniye)</label>
+            <input type="number" name="window_seconds" value="{{ config.anti_nuke.window_seconds }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="auto_unban" {{ 'checked' if config.anti_nuke.auto_unban }}>
+              <span>Otomatik Unban</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="ban_attacker" {{ 'checked' if config.anti_nuke.ban_attacker }}>
+              <span>Saldırganı Banla</span>
+            </label>
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h2>📋 Guard Log Kanal</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="guard_log">
+          <div class="form-group">
+            <label>Guard Log Kanal ID</label>
+            <input type="text" name="guard_log_channel" value="{{ config.guard_log_channel or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== TAGLOG ===== #}
+    {% if section == 'taglog' %}
+    <div class="card">
+      <div class="card-header"><h2>🏷️ Tag Log</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="tag_log">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.tag_log.enabled }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Tag</label>
+            <input type="text" name="tag" value="{{ config.tag_log.tag }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Tag Rol ID</label>
+            <input type="text" name="tag_role_id" value="{{ config.tag_log.tag_role_id or '' }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Log Kanal ID</label>
+            <input type="text" name="log_channel_id" value="{{ config.tag_log.log_channel_id or '' }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== MUSIC ===== #}
+    {% if section == 'music' %}
+    <div class="card">
+      <div class="card-header"><h2>🎵 Müzik</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="music">
+          <div class="form-group">
+            <label>Arama Motoru</label>
+            <select name="search" class="form-input">
+              <option value="soundcloud" {{ 'selected' if config.music.search == 'soundcloud' }}>SoundCloud</option>
+              <option value="youtube" {{ 'selected' if config.music.search == 'youtube' }}>YouTube</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== VOICE 24/7 ===== #}
+    {% if section == 'voice' %}
+    <div class="card">
+      <div class="card-header"><h2>🔊 Ses 24/7</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="voice_24_7">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.get('guilds', {}).get(str(config.guild_id), {}).get('voice_24_7', {}).get('enabled', false) }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Kanal ID</label>
+            <input type="text" name="channel_id" value="{{ config.get('guilds', {}).get(str(config.guild_id), {}).get('voice_24_7', {}).get('channel_id', '') }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ===== GENDER ===== #}
+    {% if section == 'gender' %}
+    <div class="card">
+      <div class="card-header"><h2>⚧ Cinsiyet Roller</h2></div>
+      <div class="card-body">
+        <form id="settingsForm" data-section="gender_roles">
+          <div class="form-group">
+            <label class="toggle-label">
+              <input type="checkbox" name="enabled" {{ 'checked' if config.get('guilds', {}).get(str(config.guild_id), {}).get('gender_roles', {}).get('enabled', false) }}>
+              <span>Aktif</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Kanal ID</label>
+            <input type="text" name="channel_id" value="{{ config.get('guilds', {}).get(str(config.guild_id), {}).get('gender_roles', {}).get('channel_id', '') }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Erkek Rol ID</label>
+            <input type="text" name="male_role_id" value="{{ config.get('guilds', {}).get(str(config.guild_id), {}).get('gender_roles', {}).get('male_role_id', '') }}" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Kadın Rol ID</label>
+            <input type="text" name="female_role_id" value="{{ config.get('guilds', {}).get(str(config.guild_id), {}).get('gender_roles', {}).get('female_role_id', '') }}" class="form-input">
+          </div>
+          <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div id="saveStatus" class="save-status"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('settingsForm')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const section = this.dataset.section || '{{ section }}';
+  const formData = new FormData(this);
+  const values = {};
+
+  for (const [key, val] of formData.entries()) {
+    const input = this.querySelector(`[name="${key}"]`);
+    if (input && input.type === 'checkbox') {
+      values[key] = input.checked;
+    } else if (input && (input.type === 'number')) {
+      values[key] = Number(val);
+    } else {
+      values[key] = val;
+    }
+  }
+
+  // Handle top-level fields for general section
+  if (section === 'general') {
+    fetch('/api/config', {
+      method: 'GET',
+    }).then(r => r.json()).then(cfg => {
+      Object.assign(cfg, values);
+      return fetch('/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(cfg),
+      });
+    }).then(r => r.json()).then(d => {
+      showStatus(d.ok ? 'Kaydedildi!' : 'Hata!', d.ok);
+    });
+    return;
+  }
+
+  // Handle nested sections
+  fetch('/api/config/section', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ section, values }),
+  }).then(r => r.json()).then(d => {
+    showStatus(d.ok ? 'Kaydedildi!' : 'Hata!', d.ok);
+  });
+});
+
+function showStatus(msg, ok) {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.className = 'save-status ' + (ok ? 'success' : 'error');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+</script>
+{% endblock %}

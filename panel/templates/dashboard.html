@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>📊 Dashboard</h1>
+  <button onclick="restartBot()" class="btn btn-warning">🔄 Botu Yeniden Başlat</button>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon">👥</div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-members">{{ stats.total_members }}</div>
+      <div class="stat-label">Üye (Level Sistemi)</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">🎫</div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-tickets">{{ stats.open_tickets }}</div>
+      <div class="stat-label">Açık Ticket</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">⚠️</div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-warns">{{ stats.total_warns }}</div>
+      <div class="stat-label">Toplam Uyarı</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-balance">{{ stats.total_balance }}</div>
+      <div class="stat-label">Toplam Bakiye</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">🏷️</div>
+    <div class="stat-info">
+      <div class="stat-value" id="stat-tags">{{ stats.total_tags }}</div>
+      <div class="stat-label">Tag Sayısı</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h2>🎯 Bot Bilgileri</h2>
+    </div>
+    <div class="card-body">
+      <div class="info-row">
+        <span class="info-label">Bot Adı</span>
+        <span class="info-value">{{ config.prefix }} bot</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Prefix</span>
+        <span class="info-value">{{ config.prefix }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Guild ID</span>
+        <span class="info-value">{{ config.guild_id }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Bot ID</span>
+        <span class="info-value">{{ config.bot_user_id }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Sahip</span>
+        <span class="info-value">{{ config.owner_id }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>🛡️ Sistem Durumu</h2>
+    </div>
+    <div class="card-body">
+      <div class="info-row">
+        <span class="info-label">Anti-Nuke</span>
+        <span class="status-badge {{ 'active' if config.anti_nuke.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.anti_nuke.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Hoşgeldin</span>
+        <span class="status-badge {{ 'active' if config.welcome.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.welcome.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Kayıt Sistemi</span>
+        <span class="status-badge {{ 'active' if config.registration.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.registration.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Seviye Sistemi</span>
+        <span class="status-badge {{ 'active' if config.levels.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.levels.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Ticket Sistemi</span>
+        <span class="status-badge {{ 'active' if config.tickets.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.tickets.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Otomod</span>
+        <span class="status-badge {{ 'active' if config.automod.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.automod.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">AI Chat</span>
+        <span class="status-badge {{ 'active' if config.ai.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.ai.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Tag Log</span>
+        <span class="status-badge {{ 'active' if config.tag_log.enabled else 'inactive' }}">
+          {{ '✅ Açık' if config.tag_log.enabled else '❌ Kapalı' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>🔗 Hızlı Erişim</h2>
+  </div>
+  <div class="card-body">
+    <div class="quick-links">
+      <a href="/settings?section=general" class="quick-link">⚙️ Genel Ayarlar</a>
+      <a href="/settings?section=welcome" class="quick-link">👋 Hoşgeldin</a>
+      <a href="/settings?section=moderation" class="quick-link">🛡️ Moderasyon</a>
+      <a href="/settings?section=levels" class="quick-link">🏆 Seviyeler</a>
+      <a href="/settings?section=economy" class="quick-link">💰 Ekonomi</a>
+      <a href="/settings?section=tickets" class="quick-link">🎫 Ticketler</a>
+      <a href="/settings?section=automod" class="quick-link">🤖 Otomod</a>
+      <a href="/settings?section=ai" class="quick-link">🧠 AI Chat</a>
+      <a href="/settings?section=guard" class="quick-link">🛡️ Guard</a>
+      <a href="/settings?section=taglog" class="quick-link">🏷️ Tag Log</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function restartBot() {
+  if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
+  fetch('/api/restart', { method: 'POST' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) alert('Yeniden başlatma isteği gönderildi!');
+      else alert('Hata: ' + d.error);
+    });
+}
+</script>
+{% endblock %}

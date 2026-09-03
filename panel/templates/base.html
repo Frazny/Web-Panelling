@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Bot Panel{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🤖</div>
+      <span>Bot Panel</span>
+    </div>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a href="/settings?section=general" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+        <span class="nav-icon">⚙️</span> Ayarlar
+      </a>
+
+      <div class="nav-section-label">MODERASYOn</div>
+
+      <a href="/moderation" class="nav-link {% if request.path == '/moderation' %}active{% endif %}">
+        <span class="nav-icon">🛡️</span> Moderasyon
+      </a>
+      <a href="/tickets" class="nav-link {% if request.path == '/tickets' %}active{% endif %}">
+        <span class="nav-icon">🎫</span> Ticketlar
+      </a>
+      <a href="/members" class="nav-link {% if request.path == '/members' %}active{% endif %}">
+        <span class="nav-icon">👥</span> Üyeler
+      </a>
+
+      <div class="nav-section-label">İSTATİSTİK</div>
+
+      <a href="/levels" class="nav-link {% if request.path == '/levels' %}active{% endif %}">
+        <span class="nav-icon">🏆</span> Seviyeler
+      </a>
+      <a href="/economy" class="nav-link {% if request.path == '/economy' %}active{% endif %}">
+        <span class="nav-icon">💰</span> Ekonomi
+      </a>
+
+      <div class="nav-section-label">SİSTEM</div>
+
+      <a href="/cogs" class="nav-link {% if request.path == '/cogs' %}active{% endif %}">
+        <span class="nav-icon">🧩</span> Cog Yönetimi
+      </a>
+      <a href="/logs" class="nav-link {% if request.path == '/logs' %}active{% endif %}">
+        <span class="nav-icon">📋</span> Loglar
+      </a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        {% if user.avatar %}
+        <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" class="avatar" alt="">
+        {% else %}
+        <div class="avatar avatar-default">{{ user.username[0] }}</div>
+        {% endif %}
+        <span class="username">{{ user.username }}</span>
+      </div>
+      <a href="/logout" class="nav-link logout">🚪 Çıkış</a>
+    </div>
+  </nav>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
