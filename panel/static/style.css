@@ -1231,3 +1231,103 @@ tr:hover .user-cell-avatar {
   font-family: 'Consolas', monospace;
   margin-top: 1px;
 }
+
+/* ── Pagination ──────────────────────────────── */
+.pagination-wrap { padding: 14px 16px; border-top: 1px solid var(--border); }
+.pagination { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+.pg-btn {
+  min-width: 34px; height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.pg-btn:hover { border-color: var(--border-hover); color: var(--text); }
+.pg-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* ── Bot Status Badge ────────────────────────── */
+.bot-status-badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: .8rem; font-weight: 600;
+  transition: var(--transition);
+}
+
+.bot-status-badge.online { border-color: rgba(34,211,160,.3); background: rgba(34,211,160,.06); }
+.bot-status-badge.offline { border-color: rgba(244,63,94,.3); background: rgba(244,63,94,.06); }
+
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Sidebar bot status mini ─────────────────── */
+.sidebar-footer-top {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sidebar-bot-status {
+  flex: 1;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: .75rem; font-weight: 600;
+  color: var(--text-muted);
+}
+
+.mini-status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+  transition: background .3s, box-shadow .3s;
+}
+
+.mini-status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Theme Toggle ────────────────────────────── */
+.theme-toggle-btn {
+  width: 36px; height: 36px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover { border-color: var(--border-hover); transform: rotate(20deg); }
+
+/* ── Uptime bar (dashboard) ──────────────────── */
+.uptime-bar-wrap { overflow: hidden; }
+
+/* ── Charts page ─────────────────────────────── */
+canvas { max-width: 100%; }

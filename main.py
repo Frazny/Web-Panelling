@@ -187,6 +187,13 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.idle)
     await _sync_commands()
     await _restore_persistent_views()
+    # Bot başlangıç zamanını kaydet (panel uptime için)
+    try:
+        os.makedirs("data", exist_ok=True)
+        with open(os.path.join("data", "bot_start.txt"), "w") as f:
+            f.write(str(int(time.time())))
+    except Exception:
+        pass
     print(f"Bot giriş yaptı: {bot.user} (ID: {bot.user.id})")
     print("Sunucular:", [g.name for g in bot.guilds])
 

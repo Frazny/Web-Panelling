@@ -1,32 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Üye Yönetimi - Bot Panel{% endblock %}
+{% block title %}Üyeler — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>👥 Üye Yönetimi</h1>
+  <span id="memberTotal" class="stat-badge"></span>
 </div>
 
-<!-- Arama -->
+<!-- Üye Listesi -->
 <div class="card">
-  <div class="card-header"><h2>🔍 Üye Sorgula</h2></div>
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>📋 Kayıtlı Üyeler</h2>
+    <div class="search-row">
+      <input type="text" id="memberSearch" class="form-input" placeholder="İsim veya ID ara..." style="width:220px" oninput="searchMembers()">
+      <button onclick="loadMembers(1)" class="btn btn-sm">🔄</button>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Kullanıcı</th><th>XP</th><th>Mesaj</th><th>Ses</th><th>Bakiye</th><th>İşlem</th></tr></thead>
+      <tbody id="membersTbody"><tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr></tbody>
+    </table>
+    <div id="memberPagination" class="pagination-wrap"></div>
+  </div>
+</div>
+
+<!-- ID ile Sorgula -->
+<div class="card">
+  <div class="card-header"><h2>🔍 ID ile Detaylı Sorgula</h2></div>
   <div class="card-body">
     <div class="search-row">
-      <input type="text" id="memberIdInput" class="form-input" placeholder="Kullanıcı ID girin..." style="max-width:320px">
-      <button onclick="loadMember()" class="btn btn-primary">Sorgula</button>
+      <input type="text" id="memberIdInput" class="form-input" placeholder="Kullanıcı ID..." style="max-width:300px">
+      <button onclick="loadMemberDetail()" class="btn btn-primary">Sorgula</button>
     </div>
     <div id="memberResult" style="margin-top:20px"></div>
   </div>
 </div>
 
-<!-- Whitelist / Blacklist Yönetimi -->
+<!-- Whitelist / Blacklist -->
 <div class="grid-2">
   <div class="card">
     <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-      <h2>✅ Whitelist</h2>
-      <button onclick="loadWhitelist()" class="btn btn-sm">🔄</button>
+      <h2>✅ Whitelist</h2><button onclick="loadWhitelist()" class="btn btn-sm">🔄</button>
     </div>
     <div class="card-body">
       <div class="search-row" style="margin-bottom:12px">
-        <input type="text" id="whitelistAddId" class="form-input" placeholder="Kullanıcı ID..." style="max-width:220px">
+        <input type="text" id="whitelistAddId" class="form-input" placeholder="ID..." style="max-width:200px">
         <button onclick="addWhitelist()" class="btn btn-primary btn-sm">Ekle</button>
       </div>
       <div id="whitelistList"><div class="empty-state">Yükleniyor...</div></div>
@@ -34,12 +52,11 @@
   </div>
   <div class="card">
     <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-      <h2>🚫 Blacklist</h2>
-      <button onclick="loadBlacklist()" class="btn btn-sm">🔄</button>
+      <h2>🚫 Blacklist</h2><button onclick="loadBlacklist()" class="btn btn-sm">🔄</button>
     </div>
     <div class="card-body">
       <div class="search-row" style="margin-bottom:12px">
-        <input type="text" id="blacklistAddId" class="form-input" placeholder="Kullanıcı ID..." style="max-width:220px">
+        <input type="text" id="blacklistAddId" class="form-input" placeholder="ID..." style="max-width:200px">
         <button onclick="addBlacklist()" class="btn btn-danger btn-sm">Ekle</button>
       </div>
       <div id="blacklistList"><div class="empty-state">Yükleniyor...</div></div>
@@ -47,20 +64,25 @@
   </div>
 </div>
 
+<!-- Profil Kartı Modal -->
+<div id="profileModal" class="modal" style="display:none">
+  <div class="modal-backdrop" onclick="closeModal('profileModal')"></div>
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header"><h3>👤 Kullanıcı Profili</h3><button onclick="closeModal('profileModal')" class="modal-close">✕</button></div>
+    <div class="modal-body" id="profileModalBody"></div>
+    <div class="modal-footer" id="profileModalFooter"></div>
+  </div>
+</div>
+
 <!-- Edit Modal -->
 <div id="editMemberModal" class="modal" style="display:none">
   <div class="modal-backdrop" onclick="closeModal('editMemberModal')"></div>
-  <div class="modal-box" style="min-width:400px">
-    <div class="modal-header">
-      <h3 id="editModalTitle">Düzenle</h3>
-      <button onclick="closeModal('editMemberModal')" class="modal-close">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="editModalContent"></div>
-    </div>
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="editModalTitle">Düzenle</h3><button onclick="closeModal('editMemberModal')" class="modal-close">✕</button></div>
+    <div class="modal-body"><div id="editModalContent"></div></div>
     <div class="modal-footer">
       <button onclick="closeModal('editMemberModal')" class="btn btn-secondary">İptal</button>
-      <button onclick="submitEdit()" class="btn btn-primary" id="editSubmitBtn">💾 Kaydet</button>
+      <button onclick="submitEdit()" class="btn btn-primary">💾 Kaydet</button>
     </div>
   </div>
 </div>
@@ -68,180 +90,143 @@
 
 {% block scripts %}
 <script>
-let currentEditType = '';
-let currentEditUserId = '';
+let currentMemberPage = 1, editType = '', editUid = '', searchTimer;
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleString('tr-TR') : '-'; }
+
+function renderPagination(containerId, current, total, fn) {
+  const el = document.getElementById(containerId);
+  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
+  let h = '<div class="pagination">';
+  if (current > 1) h += `<button class="pg-btn" onclick="${fn}(${current-1})">‹</button>`;
+  for (let i=Math.max(1,current-2); i<=Math.min(total,current+2); i++)
+    h += `<button class="pg-btn ${i===current?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  if (current < total) h += `<button class="pg-btn" onclick="${fn}(${current+1})">›</button>`;
+  h += '</div>'; el.innerHTML = h;
 }
 
-function formatDate(ts) {
-  if (!ts) return '-';
-  return new Date(ts * 1000).toLocaleString('tr-TR');
+function searchMembers() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadMembers(1), 400);
 }
 
-async function loadMember() {
-  const uid = document.getElementById('memberIdInput').value.trim();
-  if (!uid) return;
-  const res = document.getElementById('memberResult');
-  res.innerHTML = '<div style="color:var(--text-muted)">Yükleniyor...</div>';
+async function loadMembers(page=1) {
+  currentMemberPage = page;
+  const search = document.getElementById('memberSearch').value.trim();
+  const tbody = document.getElementById('membersTbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr>';
+  const url = `/api/members/list?page=${page}&per_page=20${search ? '&search='+encodeURIComponent(search) : ''}`;
+  const r = await fetch(url);
+  const d = await r.json();
+  document.getElementById('memberTotal').textContent = `${d.total || 0} üye`;
+  if (!d.members?.length) { tbody.innerHTML='<tr><td colspan="6" class="empty-state">Üye bulunamadı</td></tr>'; return; }
+  tbody.innerHTML = d.members.map(m => `
+    <tr>
+      <td>
+        <div class="user-cell" style="cursor:pointer" onclick="openProfile('${m.user_id}')">
+          <img src="${m.avatar}" class="user-cell-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+          <div><div class="user-cell-name">${esc(m.username)}</div><div class="user-cell-id">${m.user_id}</div></div>
+        </div>
+      </td>
+      <td><strong>${m.xp}</strong></td>
+      <td>${m.messages}</td>
+      <td>${m.voice_minutes} dk</td>
+      <td>${m.balance} 💵</td>
+      <td style="display:flex;gap:5px">
+        <button onclick="openEditModal('xp','${m.user_id}',${m.xp})" class="btn btn-xs btn-primary">XP</button>
+        <button onclick="openEditModal('balance','${m.user_id}',${m.balance})" class="btn btn-xs btn-warning">💰</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('memberPagination', page, d.pages, 'loadMembers');
+}
 
+async function openProfile(uid) {
+  document.getElementById('profileModal').style.display = 'flex';
+  document.getElementById('profileModalBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Yükleniyor...</div>';
   const r = await fetch(`/api/members/${uid}`);
   const d = await r.json();
+  if (d.error) { document.getElementById('profileModalBody').innerHTML = `<div class="empty-state">${d.error}</div>`; return; }
 
-  if (d.error) {
-    res.innerHTML = `<div class="empty-state">${d.error}</div>`;
-    return;
-  }
+  // Fetch user info from Discord
+  const discordR = await fetch(`/api/members/${uid}`);
 
-  res.innerHTML = `
-    <div class="grid-2" style="margin-bottom:0">
-      <div class="card" style="margin-bottom:0">
-        <div class="card-header"><h2>📊 Level & XP</h2></div>
-        <div class="card-body">
-          <div class="info-row"><span class="info-label">XP</span><span class="info-value">${d.xp ?? 0}</span></div>
-          <div class="info-row"><span class="info-label">Mesaj Sayısı</span><span class="info-value">${d.messages ?? 0}</span></div>
-          <div class="info-row"><span class="info-label">Ses Süresi</span><span class="info-value">${Math.floor((d.voice_seconds ?? 0) / 60)} dk</span></div>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button onclick="openEditModal('xp', '${uid}', ${d.xp ?? 0})" class="btn btn-primary btn-sm">✏️ XP Düzenle</button>
-          </div>
-        </div>
-      </div>
-      <div class="card" style="margin-bottom:0">
-        <div class="card-header"><h2>💰 Ekonomi</h2></div>
-        <div class="card-body">
-          <div class="info-row"><span class="info-label">Bakiye</span><span class="info-value">${d.balance ?? 0} 💵</span></div>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button onclick="openEditModal('balance', '${uid}', ${d.balance ?? 0})" class="btn btn-primary btn-sm">✏️ Bakiye Düzenle</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:16px;margin-bottom:0">
-      <div class="card-header"><h2>⚠️ Warnlar (${d.warns?.length ?? 0})</h2></div>
-      <div class="card-body" style="padding:0">
-        ${d.warns && d.warns.length > 0 ?
-          `<table class="data-table">
-            <thead><tr><th>#</th><th>Mod</th><th>Sebep</th><th>Tarih</th><th>İşlem</th></tr></thead>
-            <tbody>${d.warns.map(w => `
-              <tr>
-                <td>${w.id}</td>
-                <td><code>${w.mod_id}</code></td>
-                <td>${escHtml(w.reason)}</td>
-                <td>${formatDate(w.created)}</td>
-                <td><button onclick="deleteSingleWarn(${w.id})" class="btn btn-danger btn-xs">Sil</button></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>` :
-          '<div class="empty-state">Warn yok</div>'
-        }
-      </div>
-    </div>
-  `;
+  document.getElementById('profileModalBody').innerHTML = `
+    <div class="info-row"><span class="info-label">User ID</span><span class="info-value"><code>${uid}</code></span></div>
+    <div class="info-row"><span class="info-label">XP</span><span class="info-value"><strong>${d.xp}</strong></span></div>
+    <div class="info-row"><span class="info-label">Mesaj Sayısı</span><span class="info-value">${d.messages}</span></div>
+    <div class="info-row"><span class="info-label">Ses Süresi</span><span class="info-value">${Math.floor((d.voice_seconds||0)/60)} dk</span></div>
+    <div class="info-row"><span class="info-label">Bakiye</span><span class="info-value">${d.balance} 💵</span></div>
+    <div class="info-row"><span class="info-label">Warnlar</span><span class="info-value"><span class="badge badge-${d.warns?.length?'warning':'success'}">${d.warns?.length||0}</span></span></div>
+    ${d.warns?.length ? `<div style="margin-top:12px">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Sebep</th><th>Tarih</th><th></th></tr></thead>
+        <tbody>${d.warns.map(w=>`<tr><td>${w.id}</td><td>${esc(w.reason)}</td><td>${fmtDate(w.created)}</td>
+          <td><button onclick="delWarnFromProfile(${w.id},'${uid}')" class="btn btn-xs btn-danger">Sil</button></td></tr>`).join('')}</tbody>
+      </table></div>` : ''}`;
+
+  document.getElementById('profileModalFooter').innerHTML = `
+    <button onclick="closeModal('profileModal')" class="btn btn-secondary">Kapat</button>
+    <button onclick="openEditModal('xp','${uid}',${d.xp})" class="btn btn-primary btn-sm">✏️ XP</button>
+    <button onclick="openEditModal('balance','${uid}',${d.balance})" class="btn btn-warning btn-sm">✏️ Bakiye</button>`;
 }
 
-async function deleteSingleWarn(warnId) {
-  if (!confirm('Bu warni silmek istediğine emin misin?')) return;
-  const r = await fetch(`/api/moderation/warns/${warnId}`, { method: 'DELETE' });
-  const d = await r.json();
-  if (d.ok) { showToast('Warn silindi!', 'success'); loadMember(); }
-  else showToast('Hata!', 'error');
+async function delWarnFromProfile(warnId, uid) {
+  if (!confirm('Bu warni sil?')) return;
+  const r = await fetch(`/api/moderation/warns/${warnId}`, {method:'DELETE'});
+  if ((await r.json()).ok) { showToast('Silindi!','success'); openProfile(uid); }
 }
 
-function openEditModal(type, uid, currentVal) {
-  currentEditType = type;
-  currentEditUserId = uid;
-  const title = document.getElementById('editModalTitle');
-  const content = document.getElementById('editModalContent');
-  if (type === 'xp') {
-    title.textContent = '✏️ XP Düzenle';
-    content.innerHTML = `
-      <div class="form-group">
-        <label>Yeni XP Değeri</label>
-        <input type="number" id="editValue" class="form-input" value="${currentVal}" min="0">
-      </div>`;
-  } else if (type === 'balance') {
-    title.textContent = '✏️ Bakiye Düzenle';
-    content.innerHTML = `
-      <div class="form-group">
-        <label>Yeni Bakiye</label>
-        <input type="number" id="editValue" class="form-input" value="${currentVal}" min="0">
-      </div>`;
-  }
+async function loadMemberDetail() {
+  const uid = document.getElementById('memberIdInput').value.trim();
+  if (!uid) return;
+  openProfile(uid);
+  document.getElementById('profileModal').style.display = 'flex';
+}
+
+function openEditModal(type, uid, val) {
+  editType = type; editUid = uid;
+  const labels = {xp: 'XP Değeri', balance: 'Bakiye'};
+  document.getElementById('editModalTitle').textContent = `✏️ ${labels[type]||type} Düzenle`;
+  document.getElementById('editModalContent').innerHTML = `
+    <div class="form-group"><label>Yeni ${labels[type]||type}</label>
+    <input type="number" id="editValue" class="form-input" value="${val}" min="0"></div>`;
   document.getElementById('editMemberModal').style.display = 'flex';
 }
 
 async function submitEdit() {
   const val = document.getElementById('editValue').value;
-  if (val === '' || val === null) return;
-  const r = await fetch(`/api/members/${currentEditUserId}/edit`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ type: currentEditType, value: Number(val) })
-  });
+  if (val === '') return;
+  const r = await fetch(`/api/members/${editUid}/edit`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type:editType,value:Number(val)})});
   const d = await r.json();
-  if (d.ok) {
-    showToast('Kaydedildi!', 'success');
-    closeModal('editMemberModal');
-    loadMember();
-  } else showToast('Hata: ' + (d.error || '?'), 'error');
+  if (d.ok) { showToast('Kaydedildi!','success'); closeModal('editMemberModal'); loadMembers(currentMemberPage); }
+  else showToast('Hata!','error');
 }
 
 async function loadWhitelist() {
-  const r = await fetch('/api/members/whitelist');
-  const d = await r.json();
+  const r = await fetch('/api/members/whitelist'); const d = await r.json();
   const el = document.getElementById('whitelistList');
-  if (!d.list || d.list.length === 0) { el.innerHTML = '<div class="empty-state">Boş</div>'; return; }
-  el.innerHTML = d.list.map(uid => `
-    <div class="tag-item">
-      <code>${uid}</code>
-      <button onclick="removeWhitelist('${uid}')" class="btn btn-danger btn-xs">✕</button>
-    </div>`).join('');
+  el.innerHTML = d.list?.length ? d.list.map(uid=>`<div class="tag-item"><code>${uid}</code><button onclick="removeWhitelist('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join('') : '<div class="empty-state">Boş</div>';
 }
-
 async function addWhitelist() {
-  const uid = document.getElementById('whitelistAddId').value.trim();
-  if (!uid) return;
-  const r = await fetch('/api/members/whitelist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({user_id: uid}) });
-  const d = await r.json();
-  if (d.ok) { showToast('Eklendi!', 'success'); document.getElementById('whitelistAddId').value = ''; loadWhitelist(); }
-  else showToast('Hata!', 'error');
+  const uid = document.getElementById('whitelistAddId').value.trim(); if(!uid) return;
+  const r = await fetch('/api/members/whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+  if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('whitelistAddId').value='';loadWhitelist();}
 }
-
-async function removeWhitelist(uid) {
-  const r = await fetch(`/api/members/whitelist/${uid}`, { method: 'DELETE' });
-  const d = await r.json();
-  if (d.ok) { showToast('Kaldırıldı!', 'success'); loadWhitelist(); }
-}
+async function removeWhitelist(uid){const r=await fetch(`/api/members/whitelist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadWhitelist();}}
 
 async function loadBlacklist() {
-  const r = await fetch('/api/members/blacklist');
-  const d = await r.json();
+  const r = await fetch('/api/members/blacklist'); const d = await r.json();
   const el = document.getElementById('blacklistList');
-  if (!d.list || d.list.length === 0) { el.innerHTML = '<div class="empty-state">Boş</div>'; return; }
-  el.innerHTML = d.list.map(uid => `
-    <div class="tag-item">
-      <code>${uid}</code>
-      <button onclick="removeBlacklist('${uid}')" class="btn btn-danger btn-xs">✕</button>
-    </div>`).join('');
+  el.innerHTML = d.list?.length ? d.list.map(uid=>`<div class="tag-item"><code>${uid}</code><button onclick="removeBlacklist('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join('') : '<div class="empty-state">Boş</div>';
 }
-
 async function addBlacklist() {
-  const uid = document.getElementById('blacklistAddId').value.trim();
-  if (!uid) return;
-  const r = await fetch('/api/members/blacklist', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({user_id: uid}) });
-  const d = await r.json();
-  if (d.ok) { showToast('Eklendi!', 'success'); document.getElementById('blacklistAddId').value = ''; loadBlacklist(); }
-  else showToast('Hata!', 'error');
+  const uid = document.getElementById('blacklistAddId').value.trim(); if(!uid) return;
+  const r = await fetch('/api/members/blacklist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+  if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('blacklistAddId').value='';loadBlacklist();}
 }
+async function removeBlacklist(uid){const r=await fetch(`/api/members/blacklist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadBlacklist();}}
 
-async function removeBlacklist(uid) {
-  const r = await fetch(`/api/members/blacklist/${uid}`, { method: 'DELETE' });
-  const d = await r.json();
-  if (d.ok) { showToast('Kaldırıldı!', 'success'); loadBlacklist(); }
-}
-
-loadWhitelist();
-loadBlacklist();
+loadMembers(); loadWhitelist(); loadBlacklist();
 </script>
 {% endblock %}

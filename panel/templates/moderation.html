@@ -1,23 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Moderasyon - Bot Panel{% endblock %}
+{% block title %}Moderasyon — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>🛡️ Moderasyon</h1>
   <div class="header-actions">
-    <button onclick="openAddWarnModal()" class="btn btn-warning">⚠️ Warn Ekle</button>
+    <button onclick="openAddWarnModal()" class="btn btn-warning btn-sm">⚠️ Warn Ekle</button>
   </div>
 </div>
 
-<!-- Warn Arama -->
+<!-- Warn Sorgula -->
 <div class="card">
-  <div class="card-header">
-    <h2>🔍 Kullanıcı Warn Sorgula</h2>
-  </div>
+  <div class="card-header"><h2>🔍 Kullanıcı Warn Sorgula</h2></div>
   <div class="card-body">
     <div class="search-row">
-      <input type="text" id="warnUserIdInput" class="form-input" placeholder="Kullanıcı ID girin..." style="max-width:320px">
+      <input type="text" id="warnUserIdInput" class="form-input" placeholder="Kullanıcı ID girin..." style="max-width:300px">
       <button onclick="loadWarns()" class="btn btn-primary">Sorgula</button>
-      <button onclick="clearWarnsForUser()" class="btn btn-danger" id="clearWarnsBtn" style="display:none">🗑️ Tüm Warnları Sil</button>
+      <button onclick="clearWarnsForUser()" class="btn btn-danger btn-sm" id="clearWarnsBtn" style="display:none">🗑️ Tümünü Sil</button>
     </div>
     <div id="warnResults" style="margin-top:16px"></div>
   </div>
@@ -26,48 +24,31 @@
 <!-- Tüm Warnlar -->
 <div class="card">
   <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-    <h2>⚠️ Son Warnlar (50)</h2>
-    <button onclick="loadAllWarns()" class="btn btn-sm">🔄 Yenile</button>
+    <h2>⚠️ Warnlar</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="warnTotal" class="stat-badge"></span>
+      <button onclick="loadAllWarns(1)" class="btn btn-sm">🔄</button>
+    </div>
   </div>
   <div class="card-body" style="padding:0">
-    <table class="data-table" id="allWarnsTable">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Kullanıcı</th>
-          <th>Mod</th>
-          <th>Sebep</th>
-          <th>Tarih</th>
-          <th>İşlem</th>
-        </tr>
-      </thead>
-      <tbody id="allWarnsTbody">
-        <tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr>
-      </tbody>
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Kullanıcı</th><th>Moderatör</th><th>Sebep</th><th>Tarih</th><th>İşlem</th></tr></thead>
+      <tbody id="allWarnsTbody"><tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr></tbody>
     </table>
+    <div id="warnPagination" class="pagination-wrap"></div>
   </div>
 </div>
 
-<!-- Cezalar -->
+<!-- Aktif Cezalar -->
 <div class="card">
   <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-    <h2>⛔ Aktif Cezalar (Mute/Ban)</h2>
-    <button onclick="loadPunishments()" class="btn btn-sm">🔄 Yenile</button>
+    <h2>⛔ Aktif Cezalar</h2>
+    <button onclick="loadPunishments()" class="btn btn-sm">🔄</button>
   </div>
   <div class="card-body" style="padding:0">
-    <table class="data-table" id="punishmentsTable">
-      <thead>
-        <tr>
-          <th>Kullanıcı</th>
-          <th>Tür</th>
-          <th>Sebep</th>
-          <th>Bitiş</th>
-          <th>İşlem</th>
-        </tr>
-      </thead>
-      <tbody id="punishmentsTbody">
-        <tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>
-      </tbody>
+    <table class="data-table">
+      <thead><tr><th>Kullanıcı</th><th>Tür</th><th>Sebep</th><th>Bitiş</th><th>İşlem</th></tr></thead>
+      <tbody id="punishmentsTbody"><tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -76,166 +57,138 @@
 <div id="addWarnModal" class="modal" style="display:none">
   <div class="modal-backdrop" onclick="closeModal('addWarnModal')"></div>
   <div class="modal-box">
-    <div class="modal-header">
-      <h3>⚠️ Warn Ekle</h3>
-      <button onclick="closeModal('addWarnModal')" class="modal-close">✕</button>
-    </div>
+    <div class="modal-header"><h3>⚠️ Warn Ekle</h3><button onclick="closeModal('addWarnModal')" class="modal-close">✕</button></div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>Kullanıcı ID</label>
-        <input type="text" id="warnTargetId" class="form-input" placeholder="123456789">
-      </div>
-      <div class="form-group">
-        <label>Sebep</label>
-        <input type="text" id="warnReason" class="form-input" placeholder="Kural ihlali...">
-      </div>
+      <div class="form-group"><label>Kullanıcı ID</label><input type="text" id="warnTargetId" class="form-input" placeholder="123456789"></div>
+      <div class="form-group"><label>Sebep</label><input type="text" id="warnReason" class="form-input" placeholder="Kural ihlali..."></div>
     </div>
     <div class="modal-footer">
       <button onclick="closeModal('addWarnModal')" class="btn btn-secondary">İptal</button>
-      <button onclick="submitWarn()" class="btn btn-warning">⚠️ Warn Ekle</button>
+      <button onclick="submitWarn()" class="btn btn-warning">⚠️ Ekle</button>
     </div>
   </div>
 </div>
-
 {% endblock %}
+
 {% block scripts %}
 <script>
-const GUILD_ID = "{{ config.guild_id }}";
+let currentWarnPage = 1;
 
-function formatDate(ts) {
-  if (!ts) return '-';
-  return new Date(ts * 1000).toLocaleString('tr-TR');
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleString('tr-TR') : '-'; }
+
+function userCell(name, avatar, id) {
+  return `<div class="user-cell">
+    <img src="${avatar}" class="user-cell-avatar" alt="" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+    <div><div class="user-cell-name">${esc(name)}</div><div class="user-cell-id">${id}</div></div>
+  </div>`;
 }
 
-async function loadAllWarns() {
+function renderPagination(containerId, current, total, onClickFn) {
+  const el = document.getElementById(containerId);
+  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
+  let html = '<div class="pagination">';
+  if (current > 1) html += `<button class="pg-btn" onclick="${onClickFn}(${current-1})">‹</button>`;
+  for (let i = Math.max(1, current-2); i <= Math.min(total, current+2); i++) {
+    html += `<button class="pg-btn ${i===current?'active':''}" onclick="${onClickFn}(${i})">${i}</button>`;
+  }
+  if (current < total) html += `<button class="pg-btn" onclick="${onClickFn}(${current+1})">›</button>`;
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function loadAllWarns(page=1) {
+  currentWarnPage = page;
   const tbody = document.getElementById('allWarnsTbody');
   tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr>';
-  const res = await fetch('/api/moderation/warns');
-  const data = await res.json();
-  if (!data.warns || data.warns.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Warn bulunamadı</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.warns.map((w, i) => `
+  const r = await fetch(`/api/moderation/warns/with_users?page=${page}&per_page=20`);
+  const d = await r.json();
+  document.getElementById('warnTotal').textContent = `${d.total || 0} warn`;
+  if (!d.warns?.length) { tbody.innerHTML='<tr><td colspan="6" class="empty-state">Warn yok</td></tr>'; return; }
+  tbody.innerHTML = d.warns.map(w => `
     <tr>
-      <td>${w.id}</td>
-      <td><code>${w.user_id}</code></td>
-      <td><code>${w.mod_id}</code></td>
-      <td>${escHtml(w.reason)}</td>
-      <td>${formatDate(w.created)}</td>
+      <td><strong>${w.id}</strong></td>
+      <td>${userCell(w.user_name, w.user_avatar, w.user_id)}</td>
+      <td>${userCell(w.mod_name, w.mod_avatar, w.mod_id)}</td>
+      <td>${esc(w.reason)}</td>
+      <td style="white-space:nowrap">${fmtDate(w.created)}</td>
       <td><button onclick="deleteWarn(${w.id})" class="btn btn-danger btn-xs">Sil</button></td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
+  renderPagination('warnPagination', page, d.pages, 'loadAllWarns');
 }
 
 async function loadWarns() {
   const uid = document.getElementById('warnUserIdInput').value.trim();
   if (!uid) return;
   const res = document.getElementById('warnResults');
-  res.innerHTML = 'Yükleniyor...';
+  res.innerHTML = '<div style="color:var(--text-muted)">Yükleniyor...</div>';
   const r = await fetch(`/api/moderation/warns/${uid}`);
-  const data = await r.json();
-  document.getElementById('clearWarnsBtn').style.display = data.warns && data.warns.length > 0 ? '' : 'none';
-  if (!data.warns || data.warns.length === 0) {
-    res.innerHTML = '<div class="empty-state">Bu kullanıcının warni yok.</div>';
-    return;
-  }
+  const d = await r.json();
+  document.getElementById('clearWarnsBtn').style.display = d.warns?.length ? '' : 'none';
+  if (!d.warns?.length) { res.innerHTML='<div class="empty-state">Bu kullanıcının warni yok.</div>'; return; }
   res.innerHTML = `<table class="data-table">
     <thead><tr><th>#</th><th>Mod</th><th>Sebep</th><th>Tarih</th><th>İşlem</th></tr></thead>
-    <tbody>${data.warns.map(w => `
-      <tr>
-        <td>${w.id}</td>
-        <td><code>${w.mod_id}</code></td>
-        <td>${escHtml(w.reason)}</td>
-        <td>${formatDate(w.created)}</td>
-        <td><button onclick="deleteWarn(${w.id}, true)" class="btn btn-danger btn-xs">Sil</button></td>
-      </tr>`).join('')}
-    </tbody>
-  </table>`;
+    <tbody>${d.warns.map(w=>`<tr>
+      <td>${w.id}</td><td><code>${w.mod_id}</code></td>
+      <td>${esc(w.reason)}</td><td>${fmtDate(w.created)}</td>
+      <td><button onclick="deleteWarn(${w.id},true)" class="btn btn-danger btn-xs">Sil</button></td>
+    </tr>`).join('')}</tbody></table>`;
 }
 
-async function deleteWarn(warnId, reload=false) {
+async function deleteWarn(id, reload=false) {
   if (!confirm('Bu warni silmek istediğine emin misin?')) return;
-  const r = await fetch(`/api/moderation/warns/${warnId}`, { method: 'DELETE' });
+  const r = await fetch(`/api/moderation/warns/${id}`, {method:'DELETE'});
   const d = await r.json();
-  if (d.ok) {
-    showToast('Warn silindi!', 'success');
-    loadAllWarns();
-    if (reload) loadWarns();
-  } else {
-    showToast('Hata: ' + (d.error || '?'), 'error');
-  }
+  if (d.ok) { showToast('Warn silindi!','success'); loadAllWarns(currentWarnPage); if(reload) loadWarns(); }
+  else showToast('Hata!','error');
 }
 
 async function clearWarnsForUser() {
   const uid = document.getElementById('warnUserIdInput').value.trim();
-  if (!uid || !confirm(`${uid} ID'li kullanıcının tüm warnları silinecek. Emin misin?`)) return;
-  const r = await fetch(`/api/moderation/warns/clear/${uid}`, { method: 'DELETE' });
+  if (!uid || !confirm(`Tüm warnlar silinecek. Emin misin?`)) return;
+  const r = await fetch(`/api/moderation/warns/clear/${uid}`, {method:'DELETE'});
   const d = await r.json();
-  if (d.ok) {
-    showToast('Tüm warnlar silindi!', 'success');
-    loadWarns();
-    loadAllWarns();
-  }
+  if (d.ok) { showToast('Warnlar silindi!','success'); loadWarns(); loadAllWarns(1); }
 }
 
 async function loadPunishments() {
   const tbody = document.getElementById('punishmentsTbody');
   tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>';
   const r = await fetch('/api/moderation/punishments');
-  const data = await r.json();
-  if (!data.punishments || data.punishments.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Aktif ceza yok</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.punishments.map(p => `
-    <tr>
-      <td><code>${p.user_id}</code></td>
-      <td><span class="badge badge-${p.kind === 'ban' ? 'danger' : 'warning'}">${p.kind.toUpperCase()}</span></td>
-      <td>${escHtml(p.reason)}</td>
-      <td>${p.until ? formatDate(p.until) : 'Kalıcı'}</td>
-      <td><button onclick="deletePunishment(${p.id})" class="btn btn-danger btn-xs">Kaldır</button></td>
-    </tr>
-  `).join('');
+  const d = await r.json();
+  if (!d.punishments?.length) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">Aktif ceza yok</td></tr>'; return; }
+  tbody.innerHTML = d.punishments.map(p=>`<tr>
+    <td><code>${p.user_id}</code></td>
+    <td><span class="badge badge-${p.kind==='ban'?'danger':'warning'}">${p.kind.toUpperCase()}</span></td>
+    <td>${esc(p.reason)}</td>
+    <td>${p.until ? fmtDate(p.until) : 'Kalıcı'}</td>
+    <td><button onclick="deletePunishment(${p.id})" class="btn btn-danger btn-xs">Kaldır</button></td>
+  </tr>`).join('');
 }
 
 async function deletePunishment(id) {
   if (!confirm('Cezayı kaldırmak istediğine emin misin?')) return;
-  const r = await fetch(`/api/moderation/punishments/${id}`, { method: 'DELETE' });
+  const r = await fetch(`/api/moderation/punishments/${id}`, {method:'DELETE'});
   const d = await r.json();
-  if (d.ok) { showToast('Ceza kaldırıldı!', 'success'); loadPunishments(); }
-  else showToast('Hata!', 'error');
+  if (d.ok) { showToast('Kaldırıldı!','success'); loadPunishments(); }
 }
 
 function openAddWarnModal() {
-  document.getElementById('warnTargetId').value = '';
-  document.getElementById('warnReason').value = '';
-  document.getElementById('addWarnModal').style.display = 'flex';
+  document.getElementById('warnTargetId').value='';
+  document.getElementById('warnReason').value='';
+  document.getElementById('addWarnModal').style.display='flex';
 }
 
 async function submitWarn() {
   const uid = document.getElementById('warnTargetId').value.trim();
   const reason = document.getElementById('warnReason').value.trim();
-  if (!uid || !reason) { showToast('ID ve sebep zorunlu!', 'error'); return; }
-  const r = await fetch('/api/moderation/warns', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ user_id: uid, reason })
-  });
+  if (!uid || !reason) { showToast('ID ve sebep zorunlu!','error'); return; }
+  const r = await fetch('/api/moderation/warns', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:uid,reason})});
   const d = await r.json();
-  if (d.ok) {
-    showToast('Warn eklendi!', 'success');
-    closeModal('addWarnModal');
-    loadAllWarns();
-  } else showToast('Hata!', 'error');
+  if (d.ok) { showToast('Warn eklendi!','success'); closeModal('addWarnModal'); loadAllWarns(1); }
+  else showToast('Hata!','error');
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// Init
-loadAllWarns();
-loadPunishments();
+loadAllWarns(); loadPunishments();
 </script>
 {% endblock %}

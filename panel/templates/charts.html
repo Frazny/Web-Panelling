@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Grafikler — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>📈 İstatistik Grafikleri</h1>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h2>👥 Son 30 Gün Katılım</h2></div>
+    <div class="card-body"><canvas id="joinsChart" height="220"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2>🏆 Top 10 XP</h2></div>
+    <div class="card-body"><canvas id="xpChart" height="220"></canvas></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h2>💰 Top 10 Ekonomi</h2></div>
+  <div class="card-body"><canvas id="economyChart" height="120"></canvas></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const CHART_DEFAULTS = {
+  color: 'rgba(232,234,242,0.8)',
+  grid: 'rgba(255,255,255,0.05)',
+  accent: '#6c63ff',
+  accent2: '#a855f7',
+  success: '#22d3a0',
+  warning: '#f59e0b',
+};
+
+Chart.defaults.color = CHART_DEFAULTS.color;
+Chart.defaults.borderColor = CHART_DEFAULTS.grid;
+Chart.defaults.font.family = 'Inter, sans-serif';
+
+function makeGradient(ctx, color1, color2) {
+  const g = ctx.createLinearGradient(0,0,0,300);
+  g.addColorStop(0, color1);
+  g.addColorStop(1, color2);
+  return g;
+}
+
+async function loadCharts() {
+  // Joins chart
+  const joinsR = await fetch('/api/charts/joins');
+  const joinsD = await joinsR.json();
+  const joinsCtx = document.getElementById('joinsChart').getContext('2d');
+  new Chart(joinsCtx, {
+    type: 'line',
+    data: {
+      labels: joinsD.data.map(d => d.label),
+      datasets: [{
+        label: 'Katılımlar',
+        data: joinsD.data.map(d => d.count),
+        borderColor: CHART_DEFAULTS.accent,
+        backgroundColor: makeGradient(joinsCtx, 'rgba(108,99,255,0.3)', 'rgba(108,99,255,0.01)'),
+        borderWidth: 2,
+        pointBackgroundColor: CHART_DEFAULTS.accent,
+        pointRadius: 3,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid }, ticks: { stepSize: 1 } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // XP chart
+  const xpR = await fetch('/api/charts/xp');
+  const xpD = await xpR.json();
+  const xpCtx = document.getElementById('xpChart').getContext('2d');
+  new Chart(xpCtx, {
+    type: 'bar',
+    data: {
+      labels: xpD.data.map(d => d.name),
+      datasets: [{
+        label: 'XP',
+        data: xpD.data.map(d => d.xp),
+        backgroundColor: xpD.data.map((_, i) =>
+          `rgba(108,99,255,${0.9 - i * 0.07})`),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid } },
+        x: { grid: { display: false }, ticks: { maxRotation: 30 } }
+      }
+    }
+  });
+
+  // Economy chart
+  const ecoR = await fetch('/api/charts/economy');
+  const ecoD = await ecoR.json();
+  const ecoCtx = document.getElementById('economyChart').getContext('2d');
+  new Chart(ecoCtx, {
+    type: 'bar',
+    data: {
+      labels: ecoD.data.map(d => d.name),
+      datasets: [{
+        label: 'Bakiye',
+        data: ecoD.data.map(d => d.balance),
+        backgroundColor: ecoD.data.map((_, i) =>
+          `rgba(245,158,11,${0.9 - i * 0.07})`),
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+loadCharts();
+</script>
+{% endblock %}

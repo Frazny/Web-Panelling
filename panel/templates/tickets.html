@@ -1,136 +1,121 @@
 {% extends "base.html" %}
-{% block title %}Ticketlar - Bot Panel{% endblock %}
+{% block title %}Ticketlar — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>🎫 Ticket Yönetimi</h1>
   <div class="header-actions">
     <span id="ticketStats" class="stat-badge"></span>
-    <button onclick="loadTickets()" class="btn btn-sm">🔄 Yenile</button>
+    <button onclick="loadTickets(1)" class="btn btn-sm">🔄 Yenile</button>
   </div>
 </div>
 
-<!-- Filtreler -->
 <div class="card" style="margin-bottom:20px">
-  <div class="card-body" style="padding:16px">
+  <div class="card-body" style="padding:14px 22px">
     <div class="filter-row">
-      <label style="color:var(--text-muted);font-size:.85rem;font-weight:600">Durum:</label>
-      <button onclick="setFilter('open')" class="btn btn-sm filter-btn active" id="filter-open">🟢 Açık</button>
-      <button onclick="setFilter('closed')" class="btn btn-sm filter-btn" id="filter-closed">🔴 Kapalı</button>
-      <button onclick="setFilter('all')" class="btn btn-sm filter-btn" id="filter-all">📋 Tümü</button>
+      <label style="color:var(--text-muted);font-size:.82rem;font-weight:600">Durum:</label>
+      <button onclick="setFilter('open')" class="filter-btn active" id="filter-open">🟢 Açık</button>
+      <button onclick="setFilter('closed')" class="filter-btn" id="filter-closed">🔴 Kapalı</button>
+      <button onclick="setFilter('all')" class="filter-btn" id="filter-all">📋 Tümü</button>
     </div>
   </div>
 </div>
 
-<!-- Ticket Listesi -->
 <div class="card">
   <div class="card-body" style="padding:0">
-    <table class="data-table" id="ticketsTable">
-      <thead>
-        <tr>
-          <th>Kanal ID</th>
-          <th>Kullanıcı</th>
-          <th>Durum</th>
-          <th>Oluşturulma</th>
-          <th>İşlem</th>
-        </tr>
-      </thead>
-      <tbody id="ticketsTbody">
-        <tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>
-      </tbody>
+    <table class="data-table">
+      <thead><tr><th>Kanal</th><th>Açan Kullanıcı</th><th>Durum</th><th>Oluşturulma</th><th>İşlem</th></tr></thead>
+      <tbody id="ticketsTbody"><tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr></tbody>
     </table>
+    <div id="ticketPagination" class="pagination-wrap"></div>
   </div>
 </div>
 
-<!-- Ticket Detay Modal -->
+<!-- Detay Modal -->
 <div id="ticketModal" class="modal" style="display:none">
   <div class="modal-backdrop" onclick="closeModal('ticketModal')"></div>
   <div class="modal-box">
-    <div class="modal-header">
-      <h3>🎫 Ticket Detayı</h3>
-      <button onclick="closeModal('ticketModal')" class="modal-close">✕</button>
-    </div>
-    <div class="modal-body" id="ticketModalBody">
-    </div>
-    <div class="modal-footer" id="ticketModalFooter">
-    </div>
+    <div class="modal-header"><h3>🎫 Ticket Detayı</h3><button onclick="closeModal('ticketModal')" class="modal-close">✕</button></div>
+    <div class="modal-body" id="ticketModalBody"></div>
+    <div class="modal-footer" id="ticketModalFooter"></div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-let currentFilter = 'open';
+let currentFilter = 'open', currentPage = 1;
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleString('tr-TR') : '-'; }
 
 function setFilter(f) {
   currentFilter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('filter-' + f).classList.add('active');
-  loadTickets();
+  loadTickets(1);
 }
 
-function formatDate(ts) {
-  if (!ts) return '-';
-  return new Date(ts * 1000).toLocaleString('tr-TR');
+function renderPagination(containerId, current, total, onClickFn) {
+  const el = document.getElementById(containerId);
+  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
+  let html = '<div class="pagination">';
+  if (current > 1) html += `<button class="pg-btn" onclick="${onClickFn}(${current-1})">‹</button>`;
+  for (let i = Math.max(1,current-2); i <= Math.min(total,current+2); i++)
+    html += `<button class="pg-btn ${i===current?'active':''}" onclick="${onClickFn}(${i})">${i}</button>`;
+  if (current < total) html += `<button class="pg-btn" onclick="${onClickFn}(${current+1})">›</button>`;
+  html += '</div>';
+  el.innerHTML = html;
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-async function loadTickets() {
+async function loadTickets(page=1) {
+  currentPage = page;
   const tbody = document.getElementById('ticketsTbody');
   tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>';
-  const r = await fetch(`/api/tickets?status=${currentFilter}`);
-  const data = await r.json();
-  const tickets = data.tickets || [];
-  const openCount = tickets.filter(t => t.status === 'open').length;
-  document.getElementById('ticketStats').textContent = `${openCount} açık ticket`;
-
-  if (tickets.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Ticket bulunamadı</td></tr>';
-    return;
-  }
-  tbody.innerHTML = tickets.map(t => `
+  const r = await fetch(`/api/tickets/with_users?status=${currentFilter}&page=${page}&per_page=20`);
+  const d = await r.json();
+  const open = d.tickets?.filter(t=>t.status==='open').length || 0;
+  document.getElementById('ticketStats').textContent = `${d.total || 0} ticket`;
+  if (!d.tickets?.length) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">Ticket bulunamadı</td></tr>'; return; }
+  tbody.innerHTML = d.tickets.map(t => `
     <tr>
       <td><code>${t.channel_id}</code></td>
-      <td><code>${t.user_id}</code></td>
-      <td><span class="status-badge ${t.status === 'open' ? 'active' : 'inactive'}">${t.status === 'open' ? '🟢 Açık' : '🔴 Kapalı'}</span></td>
-      <td>${formatDate(t.created_at)}</td>
       <td>
-        <button onclick="showTicketDetail(${JSON.stringify(t).replace(/"/g,'&quot;')})" class="btn btn-sm btn-secondary">Detay</button>
-        ${t.status === 'open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-sm btn-danger">Kapat</button>` : ''}
+        <div class="user-cell">
+          <img src="${t.avatar}" class="user-cell-avatar" alt="" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+          <div><div class="user-cell-name">${esc(t.username)}</div><div class="user-cell-id">${t.user_id}</div></div>
+        </div>
       </td>
-    </tr>
-  `).join('');
+      <td><span class="status-badge ${t.status==='open'?'active':'inactive'}">${t.status==='open'?'🟢 Açık':'🔴 Kapalı'}</span></td>
+      <td style="white-space:nowrap">${fmtDate(t.created_at)}</td>
+      <td style="display:flex;gap:6px">
+        <button onclick='showDetail(${JSON.stringify(t).replace(/'/g,"\\'")})'  class="btn btn-sm btn-secondary">Detay</button>
+        ${t.status==='open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-sm btn-danger">Kapat</button>` : ''}
+      </td>
+    </tr>`).join('');
+  renderPagination('ticketPagination', page, d.pages, 'loadTickets');
 }
 
-function showTicketDetail(t) {
-  const body = document.getElementById('ticketModalBody');
-  const footer = document.getElementById('ticketModalFooter');
-  body.innerHTML = `
+function showDetail(t) {
+  document.getElementById('ticketModalBody').innerHTML = `
+    <div class="user-cell" style="margin-bottom:16px;padding:12px;background:var(--bg-input);border-radius:10px;border:1px solid var(--border)">
+      <img src="${t.avatar}" class="user-cell-avatar" style="width:48px;height:48px" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+      <div><div class="user-cell-name" style="font-size:1rem">${esc(t.username)}</div><div class="user-cell-id">${t.user_id}</div></div>
+    </div>
     <div class="info-row"><span class="info-label">Kanal ID</span><span class="info-value"><code>${t.channel_id}</code></span></div>
-    <div class="info-row"><span class="info-label">Kullanıcı ID</span><span class="info-value"><code>${t.user_id}</code></span></div>
-    <div class="info-row"><span class="info-label">Durum</span><span class="info-value"><span class="status-badge ${t.status === 'open' ? 'active' : 'inactive'}">${t.status === 'open' ? '🟢 Açık' : '🔴 Kapalı'}</span></span></div>
-    <div class="info-row"><span class="info-label">Oluşturulma</span><span class="info-value">${formatDate(t.created_at)}</span></div>
-  `;
-  footer.innerHTML = `
+    <div class="info-row"><span class="info-label">Durum</span><span class="info-value"><span class="status-badge ${t.status==='open'?'active':'inactive'}">${t.status==='open'?'🟢 Açık':'🔴 Kapalı'}</span></span></div>
+    <div class="info-row"><span class="info-label">Oluşturulma</span><span class="info-value">${fmtDate(t.created_at)}</span></div>`;
+  document.getElementById('ticketModalFooter').innerHTML = `
     <button onclick="closeModal('ticketModal')" class="btn btn-secondary">Kapat</button>
-    ${t.status === 'open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-danger">🔒 Ticketi Kapat</button>` : ''}
-  `;
+    ${t.status==='open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-danger">🔒 Ticketi Kapat</button>` : ''}`;
   document.getElementById('ticketModal').style.display = 'flex';
 }
 
 async function closeTicket(channelId) {
   if (!confirm('Ticketi kapatmak istediğine emin misin?')) return;
-  const r = await fetch(`/api/tickets/${channelId}/close`, { method: 'POST' });
+  const r = await fetch(`/api/tickets/${channelId}/close`, {method:'POST'});
   const d = await r.json();
-  if (d.ok) {
-    showToast('Ticket kapatıldı!', 'success');
-    closeModal('ticketModal');
-    loadTickets();
-  } else {
-    showToast('Hata: ' + (d.error || '?'), 'error');
-  }
+  if (d.ok) { showToast('Ticket kapatıldı!','success'); closeModal('ticketModal'); loadTickets(currentPage); }
+  else showToast('Hata: '+(d.error||'?'),'error');
 }
 
 loadTickets();

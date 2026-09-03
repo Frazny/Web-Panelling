@@ -4,9 +4,24 @@
 <div class="page-header">
   <h1>📊 Dashboard</h1>
   <div class="header-actions">
-    <button onclick="restartBot()" class="btn btn-warning btn-sm" id="restartBtn">
-      🔄 Yeniden Başlat
-    </button>
+    <div id="botStatusBadge" class="bot-status-badge">
+      <span class="status-dot"></span>
+      <span class="status-text">Kontrol ediliyor...</span>
+    </div>
+    <button onclick="restartBot()" class="btn btn-warning btn-sm" id="restartBtn">🔄 Yeniden Başlat</button>
+  </div>
+</div>
+
+<!-- Uptime Bar -->
+<div class="uptime-bar-wrap card" style="margin-bottom:20px;padding:0">
+  <div class="card-body" style="padding:16px 22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:.85rem;font-weight:600;color:var(--text-muted)">⏱️ Bot Uptime</span>
+      <span id="uptimeText" style="font-size:.85rem;font-weight:700;color:var(--accent)">Yükleniyor...</span>
+    </div>
+    <div style="background:var(--bg-input);border-radius:99px;height:6px;overflow:hidden">
+      <div id="uptimeBar" style="height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width 1s ease;box-shadow:0 0 8px var(--accent-glow)"></div>
+    </div>
   </div>
 </div>
 
@@ -49,100 +64,44 @@
   </div>
 </div>
 
-<!-- Info + Sistem Durumu -->
 <div class="grid-2">
   <div class="card">
     <div class="card-header"><h2>🎯 Bot Bilgileri</h2></div>
     <div class="card-body">
-      <div class="info-row">
-        <span class="info-label">Prefix</span>
-        <span class="info-value"><code>{{ config.prefix }}</code></span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Guild ID</span>
-        <span class="info-value"><code>{{ config.guild_id }}</code></span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Bot ID</span>
-        <span class="info-value"><code>{{ config.bot_user_id }}</code></span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Sahip</span>
-        <span class="info-value"><code>{{ config.owner_id }}</code></span>
-      </div>
+      <div class="info-row"><span class="info-label">Prefix</span><span class="info-value"><code>{{ config.prefix }}</code></span></div>
+      <div class="info-row"><span class="info-label">Guild ID</span><span class="info-value"><code>{{ config.guild_id }}</code></span></div>
+      <div class="info-row"><span class="info-label">Bot ID</span><span class="info-value"><code>{{ config.bot_user_id }}</code></span></div>
+      <div class="info-row"><span class="info-label">Sahip</span><span class="info-value"><code>{{ config.owner_id }}</code></span></div>
     </div>
   </div>
-
   <div class="card">
     <div class="card-header"><h2>🛡️ Sistem Durumu</h2></div>
     <div class="card-body">
-      <div class="info-row">
-        <span class="info-label">Anti-Nuke</span>
-        <span class="status-badge {{ 'active' if config.anti_nuke.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.anti_nuke.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Hoşgeldin</span>
-        <span class="status-badge {{ 'active' if config.welcome.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.welcome.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Kayıt Sistemi</span>
-        <span class="status-badge {{ 'active' if config.registration.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.registration.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Seviye Sistemi</span>
-        <span class="status-badge {{ 'active' if config.levels.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.levels.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Ticket Sistemi</span>
-        <span class="status-badge {{ 'active' if config.tickets.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.tickets.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Otomod</span>
-        <span class="status-badge {{ 'active' if config.automod.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.automod.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">AI Chat</span>
-        <span class="status-badge {{ 'active' if config.ai.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.ai.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Tag Log</span>
-        <span class="status-badge {{ 'active' if config.tag_log.enabled else 'inactive' }}">
-          {{ '✅ Açık' if config.tag_log.enabled else '❌ Kapalı' }}
-        </span>
-      </div>
+      <div class="info-row"><span class="info-label">Anti-Nuke</span><span class="status-badge {{ 'active' if config.anti_nuke.enabled else 'inactive' }}">{{ '✅ Açık' if config.anti_nuke.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">Hoşgeldin</span><span class="status-badge {{ 'active' if config.welcome.enabled else 'inactive' }}">{{ '✅ Açık' if config.welcome.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">Kayıt Sistemi</span><span class="status-badge {{ 'active' if config.registration.enabled else 'inactive' }}">{{ '✅ Açık' if config.registration.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">Seviye Sistemi</span><span class="status-badge {{ 'active' if config.levels.enabled else 'inactive' }}">{{ '✅ Açık' if config.levels.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">Ticket Sistemi</span><span class="status-badge {{ 'active' if config.tickets.enabled else 'inactive' }}">{{ '✅ Açık' if config.tickets.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">Otomod</span><span class="status-badge {{ 'active' if config.automod.enabled else 'inactive' }}">{{ '✅ Açık' if config.automod.enabled else '❌ Kapalı' }}</span></div>
+      <div class="info-row"><span class="info-label">AI Chat</span><span class="status-badge {{ 'active' if config.ai.enabled else 'inactive' }}">{{ '✅ Açık' if config.ai.enabled else '❌ Kapalı' }}</span></div>
     </div>
   </div>
 </div>
 
-<!-- Hızlı Erişim -->
 <div class="card">
   <div class="card-header"><h2>🔗 Hızlı Erişim</h2></div>
   <div class="card-body">
     <div class="quick-links">
-      <a href="/settings?section=general"    class="quick-link">⚙️ Genel Ayarlar</a>
-      <a href="/settings?section=welcome"    class="quick-link">👋 Hoşgeldin</a>
+      <a href="/settings?section=general" class="quick-link">⚙️ Genel Ayarlar</a>
+      <a href="/settings?section=welcome" class="quick-link">👋 Hoşgeldin</a>
       <a href="/settings?section=moderation" class="quick-link">🛡️ Moderasyon</a>
-      <a href="/settings?section=levels"     class="quick-link">🏆 Seviyeler</a>
-      <a href="/settings?section=economy"    class="quick-link">💰 Ekonomi</a>
-      <a href="/settings?section=tickets"    class="quick-link">🎫 Ticketler</a>
-      <a href="/settings?section=automod"    class="quick-link">🤖 Otomod</a>
-      <a href="/settings?section=ai"         class="quick-link">🧠 AI Chat</a>
-      <a href="/settings?section=guard"      class="quick-link">🛡️ Guard</a>
-      <a href="/settings?section=taglog"     class="quick-link">🏷️ Tag Log</a>
+      <a href="/settings?section=levels" class="quick-link">🏆 Seviyeler</a>
+      <a href="/settings?section=economy" class="quick-link">💰 Ekonomi</a>
+      <a href="/settings?section=tickets" class="quick-link">🎫 Ticketler</a>
+      <a href="/settings?section=automod" class="quick-link">🤖 Otomod</a>
+      <a href="/settings?section=ai" class="quick-link">🧠 AI Chat</a>
+      <a href="/charts" class="quick-link">📈 Grafikler</a>
+      <a href="/cogs" class="quick-link">🧩 Cog Yönetimi</a>
     </div>
   </div>
 </div>
@@ -150,54 +109,68 @@
 
 {% block scripts %}
 <script>
-// ── Sayaç animasyonu
-function animateCounter(el, target, duration = 1200) {
+function animateCounter(el, target, duration=1200) {
   const start = performance.now();
-  const startVal = 0;
   function step(now) {
-    const progress = Math.min((now - start) / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 4);
-    el.textContent = Math.floor(startVal + (target - startVal) * ease).toLocaleString('tr-TR');
-    if (progress < 1) requestAnimationFrame(step);
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 4);
+    el.textContent = Math.floor(target * ease).toLocaleString('tr-TR');
+    if (p < 1) requestAnimationFrame(step);
     else el.textContent = target.toLocaleString('tr-TR');
   }
   requestAnimationFrame(step);
 }
 
-// Sayfa yüklenince kartları animasyonla göster
-window.addEventListener('load', () => {
-  document.querySelectorAll('.stat-value[data-target]').forEach((el, i) => {
-    const target = parseInt(el.dataset.target) || 0;
-    setTimeout(() => animateCounter(el, target), 300 + i * 80);
-  });
-});
+async function checkBotStatus() {
+  try {
+    const r = await fetch('/api/bot/status');
+    const d = await r.json();
+    const badge = document.getElementById('botStatusBadge');
+    const dot = badge.querySelector('.status-dot');
+    const txt = badge.querySelector('.status-text');
+    if (d.online) {
+      badge.className = 'bot-status-badge online';
+      dot.style.background = 'var(--success)';
+      txt.textContent = `🟢 Çevrimiçi · ${d.uptime}`;
+      document.getElementById('uptimeText').textContent = d.uptime;
+      document.getElementById('uptimeBar').style.width = Math.min(d.uptime_pct || 20, 100) + '%';
+    } else {
+      badge.className = 'bot-status-badge offline';
+      dot.style.background = 'var(--danger)';
+      txt.textContent = '🔴 Çevrimdışı';
+      document.getElementById('uptimeText').textContent = 'Bot çevrimdışı';
+      document.getElementById('uptimeBar').style.width = '0%';
+      document.getElementById('uptimeBar').style.background = 'var(--danger)';
+    }
+  } catch {}
+}
 
-// Restart
 async function restartBot() {
   const btn = document.getElementById('restartBtn');
   if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
-  btn.disabled = true;
-  btn.textContent = '⏳ Gönderiliyor...';
-  const r = await fetch('/api/restart', { method: 'POST' });
+  btn.disabled = true; btn.textContent = '⏳ Gönderiliyor...';
+  const r = await fetch('/api/restart', {method:'POST'});
   const d = await r.json();
-  btn.disabled = false;
-  btn.textContent = '🔄 Yeniden Başlat';
+  btn.disabled = false; btn.textContent = '🔄 Yeniden Başlat';
   if (d.ok) showToast('Yeniden başlatma isteği gönderildi!', 'success');
   else showToast('Hata: ' + d.error, 'error');
 }
 
-// Auto refresh stats
+window.addEventListener('load', () => {
+  document.querySelectorAll('.stat-value[data-target]').forEach((el, i) => {
+    const t = parseInt(el.dataset.target) || 0;
+    setTimeout(() => animateCounter(el, t), 300 + i * 80);
+  });
+  checkBotStatus();
+});
+
+// Auto refresh
 setInterval(async () => {
+  checkBotStatus();
   const r = await fetch('/api/stats').catch(() => null);
   if (!r) return;
   const d = await r.json();
-  const map = {
-    'stat-members': d.total_members,
-    'stat-tickets': d.open_tickets,
-    'stat-warns':   d.total_warns,
-    'stat-balance': d.total_balance,
-    'stat-tags':    d.total_tags,
-  };
+  const map = {'stat-members': d.total_members,'stat-tickets': d.open_tickets,'stat-warns': d.total_warns,'stat-balance': d.total_balance,'stat-tags': d.total_tags};
   Object.entries(map).forEach(([id, val]) => {
     const el = document.getElementById(id);
     if (el && val !== undefined) {

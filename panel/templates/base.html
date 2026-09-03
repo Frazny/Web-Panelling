@@ -88,6 +88,9 @@
       <a href="/economy" class="nav-link {% if request.path == '/economy' %}active{% endif %}">
         <span class="nav-icon">💰</span> Ekonomi
       </a>
+      <a href="/charts" class="nav-link {% if request.path == '/charts' %}active{% endif %}">
+        <span class="nav-icon">📈</span> Grafikler
+      </a>
 
       <div class="nav-section-label">Sistem</div>
 
@@ -100,6 +103,15 @@
     </div>
 
     <div class="sidebar-footer">
+      <div class="sidebar-footer-top">
+        <!-- Bot Status -->
+        <div id="sidebarBotStatus" class="sidebar-bot-status">
+          <span class="mini-status-dot"></span>
+          <span class="mini-status-text">Bot kontrol ediliyor...</span>
+        </div>
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" id="themeToggleBtn" class="theme-toggle-btn" title="Tema Değiştir">🌙</button>
+      </div>
       <div class="user-info">
         {% if user.avatar %}
         <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" class="avatar" alt="">
@@ -142,6 +154,72 @@
         setTimeout(() => window.location.href = href, 250);
       });
     });
+
+    // Dark/Light theme
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      const btn = document.getElementById('themeToggleBtn');
+      if (theme === 'light') {
+        root.style.setProperty('--bg-base', '#f0f2f8');
+        root.style.setProperty('--bg-primary', '#f5f7fc');
+        root.style.setProperty('--bg-secondary', '#ebedf5');
+        root.style.setProperty('--bg-card', '#ffffff');
+        root.style.setProperty('--bg-card-hover', '#f8f9ff');
+        root.style.setProperty('--bg-input', '#eef0f8');
+        root.style.setProperty('--border', 'rgba(0,0,0,0.08)');
+        root.style.setProperty('--border-hover', 'rgba(0,0,0,0.15)');
+        root.style.setProperty('--text', '#1a1d2e');
+        root.style.setProperty('--text-muted', '#7a7f99');
+        root.style.setProperty('--text-dim', '#4a4f6a');
+        if (btn) btn.textContent = '☀️';
+      } else {
+        root.style.removeProperty('--bg-base');
+        root.style.removeProperty('--bg-primary');
+        root.style.removeProperty('--bg-secondary');
+        root.style.removeProperty('--bg-card');
+        root.style.removeProperty('--bg-card-hover');
+        root.style.removeProperty('--bg-input');
+        root.style.removeProperty('--border');
+        root.style.removeProperty('--border-hover');
+        root.style.removeProperty('--text');
+        root.style.removeProperty('--text-muted');
+        root.style.removeProperty('--text-dim');
+        if (btn) btn.textContent = '🌙';
+      }
+    }
+
+    function toggleTheme() {
+      const current = localStorage.getItem('theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    }
+
+    // Apply saved theme on load
+    applyTheme(localStorage.getItem('theme') || 'dark');
+
+    // Sidebar bot status check
+    async function checkSidebarStatus() {
+      try {
+        const r = await fetch('/api/bot/status');
+        const d = await r.json();
+        const dot = document.querySelector('.mini-status-dot');
+        const txt = document.querySelector('.mini-status-text');
+        if (!dot || !txt) return;
+        if (d.online) {
+          dot.style.background = 'var(--success)';
+          dot.style.boxShadow = '0 0 6px var(--success)';
+          txt.textContent = 'Bot Çevrimiçi';
+        } else {
+          dot.style.background = 'var(--danger)';
+          dot.style.boxShadow = '0 0 6px var(--danger)';
+          txt.textContent = 'Bot Çevrimdışı';
+        }
+      } catch {}
+    }
+
+    checkSidebarStatus();
+    setInterval(checkSidebarStatus, 30000);
   </script>
 </body>
 </html>

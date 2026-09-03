@@ -384,7 +384,249 @@ def api_stats():
     except Exception:
         pass
 
+    # Bot uptime flag dosyasından hesapla
+    uptime_path = os.path.join(BOT_DIR, "data", "bot_start.txt")
+    if os.path.exists(uptime_path):
+        try:
+            with open(uptime_path) as f:
+                start_ts = float(f.read().strip())
+            elapsed = int(time.time() - start_ts)
+            h, m, s = elapsed // 3600, (elapsed % 3600) // 60, elapsed % 60
+            stats["uptime"] = f"{h}s {m}d {s}sn"
+            stats["uptime_seconds"] = elapsed
+        except Exception:
+            stats["uptime"] = "Bilinmiyor"
+    else:
+        stats["uptime"] = "Bilinmiyor"
+
+    # Panel ping
+    stats["panel_ping"] = "OK"
+    stats["bot_online"] = os.path.exists(uptime_path)
+
     return jsonify(stats)
+
+
+@app.route("/api/bot/status")
+@owner_required
+def api_bot_status():
+    """Bot online durumu ve uptime kontrolü."""
+    uptime_path = os.path.join(BOT_DIR, "data", "bot_start.txt")
+    online = os.path.exists(uptime_path)
+    uptime = "Bilinmiyor"
+    uptime_pct = 0
+    if online:
+        try:
+            with open(uptime_path) as f:
+                start_ts = float(f.read().strip())
+            elapsed = int(time.time() - start_ts)
+            h, m, s = elapsed // 3600, (elapsed % 3600) // 60, elapsed % 60
+            uptime = f"{h}s {m}d {s}sn"
+            uptime_pct = min(100, int(elapsed / 86400 * 100))
+        except Exception:
+            pass
+    return jsonify({"online": online, "uptime": uptime, "uptime_pct": uptime_pct})
+
+
+@app.route("/api/moderation/warns/with_users")
+@owner_required
+def api_warns_with_users():
+    """Warnları kullanıcı bilgileriyle birlikte döndürür."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    offset = (page - 1) * per_page
+    warns = []
+    total = 0
+    try:
+        db = get_db()
+        cur = db.execute("SELECT COUNT(*) FROM warns WHERE guild_id = ?", (guild_id,))
+        total = cur.fetchone()[0]
+        cur = db.execute(
+            "SELECT id, user_id, mod_id, reason, created FROM warns WHERE guild_id = ? ORDER BY created DESC LIMIT ? OFFSET ?",
+            (guild_id, per_page, offset),
+        )
+        for r in cur.fetchall():
+            u = fetch_discord_user(str(r[1]))
+            m = fetch_discord_user(str(r[2]))
+            warns.append({
+                "id": r[0],
+                "user_id": r[1],
+                "user_name": user_display_name(u),
+                "user_avatar": user_avatar_url(u, 32),
+                "mod_id": r[2],
+                "mod_name": user_display_name(m),
+                "mod_avatar": user_avatar_url(m, 32),
+                "reason": r[3],
+                "created": r[4],
+            })
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"warns": warns, "total": total, "page": page, "per_page": per_page, "pages": max(1, (total + per_page - 1) // per_page)})
+
+
+@app.route("/api/members/list")
+@owner_required
+def api_members_list():
+    """Tüm kayıtlı üyeleri sayfalı döndürür."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    search = request.args.get("search", "").strip()
+    offset = (page - 1) * per_page
+    members = []
+    total = 0
+    try:
+        db = get_db()
+        cur = db.execute("SELECT COUNT(*) FROM levels WHERE guild_id = ?", (guild_id,))
+        total = cur.fetchone()[0]
+        cur = db.execute(
+            "SELECT l.user_id, l.xp, l.messages, l.voice_seconds, COALESCE(e.balance, 0) "
+            "FROM levels l LEFT JOIN economy e ON l.guild_id = e.guild_id AND l.user_id = e.user_id "
+            "WHERE l.guild_id = ? ORDER BY l.xp DESC LIMIT ? OFFSET ?",
+            (guild_id, per_page, offset),
+        )
+        for r in cur.fetchall():
+            u = fetch_discord_user(str(r[0]))
+            name = user_display_name(u)
+            if search and search.lower() not in name.lower() and search not in str(r[0]):
+                continue
+            members.append({
+                "user_id": r[0],
+                "username": name,
+                "avatar": user_avatar_url(u, 32),
+                "xp": r[1],
+                "messages": r[2] or 0,
+                "voice_minutes": (r[3] or 0) // 60,
+                "balance": r[4] or 0,
+            })
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"members": members, "total": total, "page": page, "pages": max(1, (total + per_page - 1) // per_page)})
+
+
+@app.route("/api/tickets/with_users")
+@owner_required
+def api_tickets_with_users():
+    """Ticketları kullanıcı bilgileriyle döndürür."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    status = request.args.get("status", "open")
+    page = int(request.args.get("page", 1))
+    per_page = int(request.args.get("per_page", 20))
+    offset = (page - 1) * per_page
+    tickets = []
+    total = 0
+    try:
+        db = get_db()
+        if status == "all":
+            cur = db.execute("SELECT COUNT(*) FROM tickets WHERE guild_id = ?", (guild_id,))
+            total = cur.fetchone()[0]
+            cur = db.execute(
+                "SELECT channel_id, user_id, status, created_at FROM tickets WHERE guild_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (guild_id, per_page, offset),
+            )
+        else:
+            cur = db.execute("SELECT COUNT(*) FROM tickets WHERE guild_id = ? AND status = ?", (guild_id, status))
+            total = cur.fetchone()[0]
+            cur = db.execute(
+                "SELECT channel_id, user_id, status, created_at FROM tickets WHERE guild_id = ? AND status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (guild_id, status, per_page, offset),
+            )
+        for r in cur.fetchall():
+            u = fetch_discord_user(str(r[1]))
+            tickets.append({
+                "channel_id": r[0],
+                "user_id": r[1],
+                "username": user_display_name(u),
+                "avatar": user_avatar_url(u, 32),
+                "status": r[2],
+                "created_at": r[3],
+            })
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"tickets": tickets, "total": total, "page": page, "pages": max(1, (total + per_page - 1) // per_page)})
+
+
+@app.route("/api/charts/joins")
+@owner_required
+def api_chart_joins():
+    """Son 30 günlük üye katılım verisi."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    days = []
+    try:
+        db = get_db()
+        now = int(time.time())
+        for i in range(29, -1, -1):
+            day_start = now - (i + 1) * 86400
+            day_end = now - i * 86400
+            cur = db.execute(
+                "SELECT COUNT(*) FROM joins WHERE guild_id = ? AND joined_at >= ? AND joined_at < ?",
+                (guild_id, day_start, day_end),
+            )
+            count = cur.fetchone()[0]
+            import datetime
+            label = datetime.datetime.fromtimestamp(day_end).strftime("%d.%m")
+            days.append({"label": label, "count": count})
+        db.close()
+    except Exception:
+        pass
+    return jsonify({"data": days})
+
+
+@app.route("/api/charts/xp")
+@owner_required
+def api_chart_xp():
+    """Top 10 XP dağılımı."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    result = []
+    try:
+        db = get_db()
+        cur = db.execute(
+            "SELECT user_id, xp FROM levels WHERE guild_id = ? ORDER BY xp DESC LIMIT 10",
+            (guild_id,),
+        )
+        for r in cur.fetchall():
+            u = fetch_discord_user(str(r[0]))
+            result.append({"name": user_display_name(u), "xp": r[1]})
+        db.close()
+    except Exception:
+        pass
+    return jsonify({"data": result})
+
+
+@app.route("/api/charts/economy")
+@owner_required
+def api_chart_economy():
+    """Top 10 ekonomi dağılımı."""
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    result = []
+    try:
+        db = get_db()
+        cur = db.execute(
+            "SELECT user_id, balance FROM economy WHERE guild_id = ? ORDER BY balance DESC LIMIT 10",
+            (guild_id,),
+        )
+        for r in cur.fetchall():
+            u = fetch_discord_user(str(r[0]))
+            result.append({"name": user_display_name(u), "balance": r[1]})
+        db.close()
+    except Exception:
+        pass
+    return jsonify({"data": result})
+
+
+@app.route("/charts")
+@owner_required
+def charts():
+    return render_template("charts.html", user=request.panel_user, config=load_config())
 
 
 @app.route("/api/restart", methods=["POST"])
