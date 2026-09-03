@@ -224,7 +224,7 @@ def _start_panel():
         spec = importlib.util.spec_from_file_location("panel_app", os.path.join(panel_dir, "app.py"))
         panel_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(panel_module)
-        port = int(os.environ.get("PANEL_PORT", os.environ.get("PORT", 5000)))
+        port = int(os.environ.get("PANEL_PORT", os.environ.get("SERVER_PORT", os.environ.get("PORT", 5000))))
         print(f"[Panel] http://0.0.0.0:{port} adresinde başlatılıyor...", flush=True)
         panel_module.app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
     except Exception as e:
