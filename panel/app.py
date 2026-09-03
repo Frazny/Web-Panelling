@@ -124,27 +124,39 @@ def callback():
         "redirect_uri": DISCORD_REDIRECT_URI,
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    r = requests.post(
-        f"{DISCORD_API}/oauth2/token",
-        data=data,
-        headers=headers,
-        auth=(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET),
-    )
-    token = r.json().get("access_token")
+    try:
+        r = requests.post(
+            f"{DISCORD_API}/oauth2/token",
+            data=data,
+            headers=headers,
+            auth=(DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET),
+            timeout=10,
+        )
+        token_data = r.json()
+    except Exception as e:
+        return f"Token isteği hatası: {e}", 500
+
+    token = token_data.get("access_token")
     if not token:
-        return redirect(url_for("login"))
+        # Hatayı kullanıcıya göster (debug için)
+        return f"<pre>Token alınamadı!\nHTTP {r.status_code}\n{token_data}</pre>", 400
 
-    r2 = requests.get(
-        f"{DISCORD_API}/users/@me",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    user = r2.json()
+    try:
+        r2 = requests.get(
+            f"{DISCORD_API}/users/@me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        user = r2.json()
 
-    r3 = requests.get(
-        f"{DISCORD_API}/users/@me/guilds",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    user["guilds"] = r3.json()
+        r3 = requests.get(
+            f"{DISCORD_API}/users/@me/guilds",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        user["guilds"] = r3.json()
+    except Exception as e:
+        return f"Kullanıcı bilgisi hatası: {e}", 500
 
     session["user"] = user
     session["token"] = token
