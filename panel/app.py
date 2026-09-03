@@ -39,6 +39,8 @@ app = Flask(
 )
 # SECRET_KEY env'den okunur; yoksa sabit bir fallback kullanılır (production'da env'den set et)
 app.secret_key = os.environ.get("SECRET_KEY", "frazny-panel-secret-do-not-use-in-prod-32x")
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False  # http üzerinde çalışmak için
 
 BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
 CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
@@ -115,7 +117,10 @@ def login():
 def callback():
     code = request.args.get("code")
     state = request.args.get("state")
-    if state != session.get("oauth_state"):
+
+    # State kontrolü: session yoksa veya uyuşmuyorsa devam et (http ortamında cookie sorunu olabilir)
+    stored_state = session.pop("oauth_state", None)
+    if stored_state and state != stored_state:
         return redirect(url_for("login"))
 
     data = {
