@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}AI Anti-Raid — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">AI Anti-Raid</div>
+<div class="page-subtitle">Yapay zeka destekli saldırı ve anomali analizi.</div>
+
+<div class="grid-2" style="align-items:start">
+  <!-- Sol: Tehdit Analizi -->
+  <div class="card" style="margin:0">
+    <div class="card-header"><div class="card-title">🟢 Sunucu Tehdit Analizi</div></div>
+    <div class="raid-gauge-wrap">
+      <div class="raid-gauge safe" id="raidGauge" style="width:160px;height:160px">
+        <div>
+          <div class="raid-pct" id="raidPct">12%</div>
+          <div style="font-size:.65rem;text-align:center;color:var(--text3)">RAID RİSKİ</div>
+        </div>
+      </div>
+      <div class="raid-label safe" id="raidLabel">DÜŞÜK RİSK</div>
+      <div style="font-size:.78rem;color:var(--text2);text-align:center;margin-top:6px;max-width:200px" id="raidDesc">
+        Sunucuda şüpheli bir aktivite tespit edilmedi.
+      </div>
+    </div>
+  </div>
+
+  <!-- Sağ: Yapılandırma -->
+  <div class="card" style="margin:0">
+    <div class="card-header"><div class="card-title">⚙️ AI Anti-Raid Yapılandırması</div></div>
+    <div class="card-body">
+      <div class="form-group">
+        <div class="toggle-wrap" style="margin-bottom:16px">
+          <input type="checkbox" class="toggle" id="aiToggle" checked>
+          <span class="toggle-label">Yapay Zeka Koruması</span>
+        </div>
+        <div style="font-size:.78rem;color:var(--text2)">Anomali tespit motorunu aktif eder.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Algılama Hassasiyeti</label>
+        <div class="level-cards" style="grid-template-columns:repeat(3,1fr)">
+          <div class="level-card" onclick="setAISensitivity('low',this)"><div class="level-card-title" style="font-size:.8rem">DÜŞÜK</div></div>
+          <div class="level-card active" onclick="setAISensitivity('mid',this)"><div class="level-card-title" style="font-size:.8rem">ORTA</div></div>
+          <div class="level-card" onclick="setAISensitivity('high',this)"><div class="level-card-title" style="font-size:.8rem">YÜKSEK</div></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Otomatik Reaksiyon Aksiyonu</label>
+        <select class="form-select">
+          <option>Sadece Log / Yetkilileri Uyar</option>
+          <option>Timeout At (5 dk)</option>
+          <option>Sunucudan At (Kick)</option>
+          <option>Sunucudan Yasakla (Ban)</option>
+        </select>
+      </div>
+
+      <button onclick="saveAISettings()" class="btn btn-full">💾 Ayarları Uygula ve Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Analiz Raporları -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">🔍 Yapay Zeka Saldırı Analiz Raporları</div>
+    <span style="font-size:.78rem;color:var(--text2)">Sistem tarafından engellenen veya şüpheli görülen olayların detaylı dökümleri.</span>
+  </div>
+  <div class="card-body" id="aiReports">
+    <div class="alert-box warning">⚠️ Demo modunda çalışıyor. Gerçek bot verisi için bot çevrimiçi olmalıdır.</div>
+    <!-- Örnek raporlar -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--card-border);cursor:pointer" onclick="toggleReport(this)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:var(--red-bg);color:var(--red);font-size:.75rem;font-weight:800;padding:3px 8px;border-radius:6px">%82</span>
+          <div>
+            <div style="font-weight:600;font-size:.84rem">Toplu Üye Girişi</div>
+            <div style="font-size:.72rem;color:var(--text2)">🕐 {{ config.guild_id }} • Risk algılandı</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span class="badge badge-red">🔴</span>
+          <span class="badge badge-gray">AI</span>
+          <span style="color:var(--text3)">›</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--card-border);cursor:pointer">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="background:var(--red-bg);color:var(--red);font-size:.75rem;font-weight:800;padding:3px 8px;border-radius:6px">%95</span>
+          <div>
+            <div style="font-weight:600;font-size:.84rem">Kötü niyetli Yetkili / Saldırı</div>
+            <div style="font-size:.72rem;color:var(--text2)">🕐 Güvenlik kaydı • Kritik seviye</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span class="badge badge-red">🔴</span>
+          <span class="badge badge-gray">AI</span>
+          <span style="color:var(--text3)">›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setAISensitivity(level,card){
+  document.querySelectorAll('.level-cards .level-card').forEach(c=>c.classList.remove('active'));
+  card.classList.add('active');
+}
+function toggleReport(el){ el.style.opacity = el.style.opacity==='0.5'?'1':'0.5'; }
+async function saveAISettings(){
+  const enabled=document.getElementById('aiToggle').checked;
+  const r=await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'ai',values:{enabled}})});
+  const d=await r.json();
+  showToast(d.ok?'AI ayarları kaydedildi!':'Hata!',d.ok?'success':'error');
+}
+
+// Simulate risk gauge
+async function updateRisk(){
+  try {
+    const r=await fetch('/api/bot/status');
+    const d=await r.json();
+    if(!d.online){
+      document.getElementById('raidPct').textContent='?%';
+      document.getElementById('raidLabel').textContent='BOT ÇEVRİMDIŞI';
+      document.getElementById('raidGauge').className='raid-gauge warning';
+    }
+  } catch {}
+}
+updateRisk();
+</script>
+{% endblock %}

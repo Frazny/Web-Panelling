@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Mesaj Gönder — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Mesaj Gönder</div>
+<div class="page-subtitle">Sunucuya duyuru veya mesaj gönderin.</div>
+
+<div style="max-width:680px;margin:0 auto">
+  <div class="card">
+    <div class="card-header"><div class="card-title">✉️ Sunucuya Mesaj Gönder</div>
+      <span style="font-size:.75rem;color:var(--text2)">Bot üzerinden istediğiniz kanala duyuru veya mesaj gönderin.</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Hedef Kanal</label>
+        <select id="targetChannel" class="form-select">
+          <option value="">Kanal Seçin...</option>
+          {% for ch in channels %}
+          <option value="{{ ch.id }}"># {{ ch.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-hint">💡 Kanal listesi Discord API'den çekilir. Kanal görünmüyorsa ID girin.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Kanal ID (Manuel)</label>
+        <input type="text" id="manualChannelId" class="form-input" placeholder="Kanal ID...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mesaj İçeriği</label>
+        <textarea id="msgContent" class="form-textarea" rows="5" placeholder="Mesajınızı buraya yazın..."></textarea>
+        <div class="form-hint">Discord markdown desteklenir: **kalın**, *italik*, `kod`, > alıntı</div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="sendMessage()" class="btn btn-full" style="flex:1">
+          ✉️ Gönder
+        </button>
+        <button onclick="sendWebhook()" class="btn btn-full" style="flex:1;background:linear-gradient(135deg,#5865f2,#7c6af7)">
+          🔗 Webhook Olarak Gönder
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getChannelId(){
+  const manual=document.getElementById('manualChannelId').value.trim();
+  if(manual) return manual;
+  return document.getElementById('targetChannel').value;
+}
+
+async function sendMessage(){
+  const ch=getChannelId(); const msg=document.getElementById('msgContent').value.trim();
+  if(!ch){showToast('Kanal seçin veya ID girin!','error');return;}
+  if(!msg){showToast('Mesaj içeriği boş olamaz!','error');return;}
+  const r=await fetch('/api/message/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel_id:ch,content:msg})});
+  const d=await r.json();
+  if(d.ok){showToast('Mesaj gönderildi!','success');document.getElementById('msgContent').value='';}
+  else showToast('Hata: '+(d.error||'Bilinmiyor'),'error');
+}
+
+async function sendWebhook(){
+  const ch=getChannelId(); const msg=document.getElementById('msgContent').value.trim();
+  if(!ch||!msg){showToast('Kanal ve mesaj zorunlu!','error');return;}
+  const r=await fetch('/api/message/webhook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel_id:ch,content:msg})});
+  const d=await r.json();
+  if(d.ok) showToast('Webhook mesajı gönderildi!','success');
+  else showToast('Hata: '+(d.error||'Bilinmiyor'),'error');
+}
+</script>
+{% endblock %}

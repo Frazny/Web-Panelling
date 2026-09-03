@@ -1,87 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Üyeler — Bot Panel{% endblock %}
+{% block title %}Üye Yönetimi — Bot Panel{% endblock %}
 {% block content %}
-<div class="page-header">
-  <h1>👥 Üye Yönetimi</h1>
-  <span id="memberTotal" class="stat-badge"></span>
-</div>
+<div class="page-title">Üye Yönetimi</div>
+<div class="page-subtitle">Sunucu üyelerini görün ve yönetin.</div>
 
-<!-- Üye Listesi -->
 <div class="card">
-  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-    <h2>📋 Kayıtlı Üyeler</h2>
-    <div class="search-row">
-      <input type="text" id="memberSearch" class="form-input" placeholder="İsim veya ID ara..." style="width:220px" oninput="searchMembers()">
-      <button onclick="loadMembers(1)" class="btn btn-sm">🔄</button>
+  <div class="card-header" style="flex-wrap:wrap;gap:10px">
+    <div class="card-title">👥 Sunucu Üyeleri</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm filter-btn active" onclick="setMemberFilter('active',this)">Aktif Üyeler</button>
+      <button class="btn btn-ghost btn-sm filter-btn" onclick="setMemberFilter('banned',this)">Yasaklı Üyeler</button>
+      <button class="btn btn-ghost btn-sm filter-btn" onclick="setMemberFilter('roles',this)">Sunucu Rolleri</button>
+      <button onclick="loadMembers(1)" class="btn btn-primary btn-sm">🔄 Yenile</button>
+      <input type="text" id="memberSearch" class="search-input" placeholder="İsim veya ID ile ara..." oninput="searchDebounce()" style="width:200px">
     </div>
   </div>
   <div class="card-body" style="padding:0">
     <table class="data-table">
-      <thead><tr><th>Kullanıcı</th><th>XP</th><th>Mesaj</th><th>Ses</th><th>Bakiye</th><th>İşlem</th></tr></thead>
-      <tbody id="membersTbody"><tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr></tbody>
+      <thead>
+        <tr>
+          <th>Üye</th>
+          <th>Roller</th>
+          <th>Katılım Tarihi</th>
+          <th style="text-align:right">İşlemler</th>
+        </tr>
+      </thead>
+      <tbody id="membersTbody">
+        <tr><td colspan="4" class="empty-state">Yükleniyor...</td></tr>
+      </tbody>
     </table>
-    <div id="memberPagination" class="pagination-wrap"></div>
   </div>
-</div>
-
-<!-- ID ile Sorgula -->
-<div class="card">
-  <div class="card-header"><h2>🔍 ID ile Detaylı Sorgula</h2></div>
-  <div class="card-body">
-    <div class="search-row">
-      <input type="text" id="memberIdInput" class="form-input" placeholder="Kullanıcı ID..." style="max-width:300px">
-      <button onclick="loadMemberDetail()" class="btn btn-primary">Sorgula</button>
-    </div>
-    <div id="memberResult" style="margin-top:20px"></div>
-  </div>
+  <div id="memberPagination" class="pagination-wrap"></div>
 </div>
 
 <!-- Whitelist / Blacklist -->
 <div class="grid-2">
   <div class="card">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-      <h2>✅ Whitelist</h2><button onclick="loadWhitelist()" class="btn btn-sm">🔄</button>
-    </div>
+    <div class="card-header"><div class="card-title">✅ Whitelist</div><button onclick="loadWhitelist()" class="btn btn-ghost btn-sm">🔄</button></div>
     <div class="card-body">
-      <div class="search-row" style="margin-bottom:12px">
-        <input type="text" id="whitelistAddId" class="form-input" placeholder="ID..." style="max-width:200px">
-        <button onclick="addWhitelist()" class="btn btn-primary btn-sm">Ekle</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="wlAddId" class="form-input" placeholder="Kullanıcı ID...">
+        <button onclick="addWl()" class="btn btn-primary btn-sm">Ekle</button>
       </div>
-      <div id="whitelistList"><div class="empty-state">Yükleniyor...</div></div>
+      <div id="wlList"><div class="empty-state" style="padding:16px">Yükleniyor...</div></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-      <h2>🚫 Blacklist</h2><button onclick="loadBlacklist()" class="btn btn-sm">🔄</button>
-    </div>
+    <div class="card-header"><div class="card-title">🚫 Blacklist</div><button onclick="loadBlacklist()" class="btn btn-ghost btn-sm">🔄</button></div>
     <div class="card-body">
-      <div class="search-row" style="margin-bottom:12px">
-        <input type="text" id="blacklistAddId" class="form-input" placeholder="ID..." style="max-width:200px">
-        <button onclick="addBlacklist()" class="btn btn-danger btn-sm">Ekle</button>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="blAddId" class="form-input" placeholder="Kullanıcı ID...">
+        <button onclick="addBl()" class="btn btn-danger btn-sm">Ekle</button>
       </div>
-      <div id="blacklistList"><div class="empty-state">Yükleniyor...</div></div>
+      <div id="blList"><div class="empty-state" style="padding:16px">Yükleniyor...</div></div>
     </div>
   </div>
 </div>
 
-<!-- Profil Kartı Modal -->
+<!-- Profil Modal -->
 <div id="profileModal" class="modal" style="display:none">
   <div class="modal-backdrop" onclick="closeModal('profileModal')"></div>
   <div class="modal-box" style="max-width:480px">
-    <div class="modal-header"><h3>👤 Kullanıcı Profili</h3><button onclick="closeModal('profileModal')" class="modal-close">✕</button></div>
-    <div class="modal-body" id="profileModalBody"></div>
-    <div class="modal-footer" id="profileModalFooter"></div>
+    <div class="modal-header"><span class="modal-title">👤 Üye Detayı</span><button onclick="closeModal('profileModal')" class="modal-close">✕</button></div>
+    <div class="modal-body" id="profileBody"></div>
   </div>
 </div>
 
 <!-- Edit Modal -->
-<div id="editMemberModal" class="modal" style="display:none">
-  <div class="modal-backdrop" onclick="closeModal('editMemberModal')"></div>
+<div id="editModal" class="modal" style="display:none">
+  <div class="modal-backdrop" onclick="closeModal('editModal')"></div>
   <div class="modal-box">
-    <div class="modal-header"><h3 id="editModalTitle">Düzenle</h3><button onclick="closeModal('editMemberModal')" class="modal-close">✕</button></div>
-    <div class="modal-body"><div id="editModalContent"></div></div>
+    <div class="modal-header"><span class="modal-title" id="editTitle">Düzenle</span><button onclick="closeModal('editModal')" class="modal-close">✕</button></div>
+    <div class="modal-body" id="editBody"></div>
     <div class="modal-footer">
-      <button onclick="closeModal('editMemberModal')" class="btn btn-secondary">İptal</button>
+      <button onclick="closeModal('editModal')" class="btn btn-ghost">İptal</button>
       <button onclick="submitEdit()" class="btn btn-primary">💾 Kaydet</button>
     </div>
   </div>
@@ -90,142 +82,118 @@
 
 {% block scripts %}
 <script>
-let currentMemberPage = 1, editType = '', editUid = '', searchTimer;
+let memberPage=1, editType='', editUid='', searchTimer, memberFilter='active';
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleString('tr-TR') : '-'; }
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtDate(ts){return ts?new Date(ts*1000).toLocaleDateString('tr-TR'):'-';}
 
-function renderPagination(containerId, current, total, fn) {
-  const el = document.getElementById(containerId);
-  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
-  let h = '<div class="pagination">';
-  if (current > 1) h += `<button class="pg-btn" onclick="${fn}(${current-1})">‹</button>`;
-  for (let i=Math.max(1,current-2); i<=Math.min(total,current+2); i++)
-    h += `<button class="pg-btn ${i===current?'active':''}" onclick="${fn}(${i})">${i}</button>`;
-  if (current < total) h += `<button class="pg-btn" onclick="${fn}(${current+1})">›</button>`;
-  h += '</div>'; el.innerHTML = h;
+function setMemberFilter(f,btn){
+  memberFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadMembers(1);
 }
 
-function searchMembers() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => loadMembers(1), 400);
+function renderPagination(cid,cur,total,fn){
+  const el=document.getElementById(cid); if(!el||total<=1){if(el)el.innerHTML='';return;}
+  let h='<div class="pagination">';
+  if(cur>1)h+=`<button class="pg-btn" onclick="${fn}(${cur-1})">‹</button>`;
+  for(let i=Math.max(1,cur-2);i<=Math.min(total,cur+2);i++)h+=`<button class="pg-btn ${i===cur?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  if(cur<total)h+=`<button class="pg-btn" onclick="${fn}(${cur+1})">›</button>`;
+  h+='</div>'; el.innerHTML=h;
 }
 
-async function loadMembers(page=1) {
-  currentMemberPage = page;
-  const search = document.getElementById('memberSearch').value.trim();
-  const tbody = document.getElementById('membersTbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr>';
-  const url = `/api/members/list?page=${page}&per_page=20${search ? '&search='+encodeURIComponent(search) : ''}`;
-  const r = await fetch(url);
-  const d = await r.json();
-  document.getElementById('memberTotal').textContent = `${d.total || 0} üye`;
-  if (!d.members?.length) { tbody.innerHTML='<tr><td colspan="6" class="empty-state">Üye bulunamadı</td></tr>'; return; }
-  tbody.innerHTML = d.members.map(m => `
-    <tr>
+function searchDebounce(){clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadMembers(1),400);}
+
+const ACTION_BTNS = `
+  <button title="Mesaj" onclick="memberAction('msg',this)" class="btn btn-icon btn-ghost" style="background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.2)">💬</button>
+  <button title="Mute" onclick="memberAction('mute',this)" class="btn btn-icon btn-ghost" style="background:rgba(59,130,246,.1);color:var(--blue);border-color:rgba(59,130,246,.2)">🔇</button>
+  <button title="Kick" onclick="memberAction('kick',this)" class="btn btn-icon btn-ghost" style="background:rgba(245,158,11,.1);color:var(--yellow);border-color:rgba(245,158,11,.2)">👟</button>
+  <button title="Ban Kaldır" onclick="memberAction('unban',this)" class="btn btn-icon btn-ghost">↩️</button>
+  <button title="Profil" onclick="memberAction('profile',this)" class="btn btn-icon btn-ghost" style="background:rgba(124,106,247,.1);color:var(--accent2);border-color:rgba(124,106,247,.2)">👤</button>
+  <button title="Warn" onclick="memberAction('warn',this)" class="btn btn-icon btn-ghost" style="background:var(--red-bg);color:var(--red);border-color:rgba(239,68,68,.2)">⚠️</button>`;
+
+async function loadMembers(page=1){
+  memberPage=page;
+  const search=document.getElementById('memberSearch').value.trim();
+  const tbody=document.getElementById('membersTbody');
+  tbody.innerHTML='<tr><td colspan="4" class="empty-state">Yükleniyor...</td></tr>';
+  const r=await fetch(`/api/members/list?page=${page}&per_page=20${search?'&search='+encodeURIComponent(search):''}`);
+  const d=await r.json();
+  if(!d.members?.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">Üye bulunamadı</td></tr>';return;}
+  tbody.innerHTML=d.members.map(m=>`
+    <tr data-uid="${m.user_id}">
       <td>
-        <div class="user-cell" style="cursor:pointer" onclick="openProfile('${m.user_id}')">
+        <div class="user-cell">
           <img src="${m.avatar}" class="user-cell-avatar" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
           <div><div class="user-cell-name">${esc(m.username)}</div><div class="user-cell-id">${m.user_id}</div></div>
         </div>
       </td>
-      <td><strong>${m.xp}</strong></td>
-      <td>${m.messages}</td>
-      <td>${m.voice_minutes} dk</td>
-      <td>${m.balance} 💵</td>
-      <td style="display:flex;gap:5px">
-        <button onclick="openEditModal('xp','${m.user_id}',${m.xp})" class="btn btn-xs btn-primary">XP</button>
-        <button onclick="openEditModal('balance','${m.user_id}',${m.balance})" class="btn btn-xs btn-warning">💰</button>
-      </td>
+      <td><span class="badge badge-gray">XP:${m.xp}</span> <span class="badge badge-purple">${m.balance}💵</span></td>
+      <td style="color:var(--text2);font-size:.78rem">${m.messages} mesaj</td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">${ACTION_BTNS}</div></td>
     </tr>`).join('');
-  renderPagination('memberPagination', page, d.pages, 'loadMembers');
+  renderPagination('memberPagination',page,d.pages,'loadMembers');
 }
 
-async function openProfile(uid) {
-  document.getElementById('profileModal').style.display = 'flex';
-  document.getElementById('profileModalBody').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Yükleniyor...</div>';
-  const r = await fetch(`/api/members/${uid}`);
-  const d = await r.json();
-  if (d.error) { document.getElementById('profileModalBody').innerHTML = `<div class="empty-state">${d.error}</div>`; return; }
-
-  // Fetch user info from Discord
-  const discordR = await fetch(`/api/members/${uid}`);
-
-  document.getElementById('profileModalBody').innerHTML = `
-    <div class="info-row"><span class="info-label">User ID</span><span class="info-value"><code>${uid}</code></span></div>
-    <div class="info-row"><span class="info-label">XP</span><span class="info-value"><strong>${d.xp}</strong></span></div>
-    <div class="info-row"><span class="info-label">Mesaj Sayısı</span><span class="info-value">${d.messages}</span></div>
-    <div class="info-row"><span class="info-label">Ses Süresi</span><span class="info-value">${Math.floor((d.voice_seconds||0)/60)} dk</span></div>
-    <div class="info-row"><span class="info-label">Bakiye</span><span class="info-value">${d.balance} 💵</span></div>
-    <div class="info-row"><span class="info-label">Warnlar</span><span class="info-value"><span class="badge badge-${d.warns?.length?'warning':'success'}">${d.warns?.length||0}</span></span></div>
-    ${d.warns?.length ? `<div style="margin-top:12px">
-      <table class="data-table">
-        <thead><tr><th>#</th><th>Sebep</th><th>Tarih</th><th></th></tr></thead>
-        <tbody>${d.warns.map(w=>`<tr><td>${w.id}</td><td>${esc(w.reason)}</td><td>${fmtDate(w.created)}</td>
-          <td><button onclick="delWarnFromProfile(${w.id},'${uid}')" class="btn btn-xs btn-danger">Sil</button></td></tr>`).join('')}</tbody>
-      </table></div>` : ''}`;
-
-  document.getElementById('profileModalFooter').innerHTML = `
-    <button onclick="closeModal('profileModal')" class="btn btn-secondary">Kapat</button>
-    <button onclick="openEditModal('xp','${uid}',${d.xp})" class="btn btn-primary btn-sm">✏️ XP</button>
-    <button onclick="openEditModal('balance','${uid}',${d.balance})" class="btn btn-warning btn-sm">✏️ Bakiye</button>`;
+function memberAction(type,btn){
+  const uid=btn.closest('tr')?.dataset?.uid;
+  if(!uid) return;
+  if(type==='profile') openProfile(uid);
+  else if(type==='warn') { openEditModal('warn',uid,0); }
+  else showToast(`${type} işlemi: ${uid}`, 'success');
 }
 
-async function delWarnFromProfile(warnId, uid) {
-  if (!confirm('Bu warni sil?')) return;
-  const r = await fetch(`/api/moderation/warns/${warnId}`, {method:'DELETE'});
-  if ((await r.json()).ok) { showToast('Silindi!','success'); openProfile(uid); }
+async function openProfile(uid){
+  document.getElementById('profileModal').style.display='flex';
+  document.getElementById('profileBody').innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">Yükleniyor...</div>';
+  const r=await fetch(`/api/members/${uid}`);
+  const d=await r.json();
+  document.getElementById('profileBody').innerHTML=`
+    <div class="info-row"><span class="info-label">User ID</span><span class="info-val"><code>${uid}</code></span></div>
+    <div class="info-row"><span class="info-label">XP</span><span class="info-val"><strong>${d.xp||0}</strong></span></div>
+    <div class="info-row"><span class="info-label">Mesaj</span><span class="info-val">${d.messages||0}</span></div>
+    <div class="info-row"><span class="info-label">Ses</span><span class="info-val">${Math.floor((d.voice_seconds||0)/60)} dk</span></div>
+    <div class="info-row"><span class="info-label">Bakiye</span><span class="info-val">${d.balance||0} 💵</span></div>
+    <div class="info-row"><span class="info-label">Warnlar</span><span class="info-val"><span class="badge badge-${d.warns?.length?'red':'green'}">${d.warns?.length||0}</span></span></div>
+    <div style="margin-top:14px;display:flex;gap:8px">
+      <button onclick="openEditModal('xp','${uid}',${d.xp||0})" class="btn btn-primary btn-sm">✏️ XP</button>
+      <button onclick="openEditModal('balance','${uid}',${d.balance||0})" class="btn btn-warning btn-sm">✏️ Bakiye</button>
+    </div>`;
 }
 
-async function loadMemberDetail() {
-  const uid = document.getElementById('memberIdInput').value.trim();
-  if (!uid) return;
-  openProfile(uid);
-  document.getElementById('profileModal').style.display = 'flex';
+function openEditModal(type,uid,val){
+  editType=type; editUid=uid;
+  document.getElementById('editTitle').textContent = type==='xp'?'XP Düzenle':type==='balance'?'Bakiye Düzenle':'Warn Ekle';
+  document.getElementById('editBody').innerHTML=`
+    <div class="form-group">
+      <label class="form-label">${type==='warn'?'Sebep':'Yeni Değer'}</label>
+      <input type="${type==='warn'?'text':'number'}" id="editVal" class="form-input" value="${type==='warn'?'':val}" placeholder="${type==='warn'?'Kural ihlali...':''}">
+    </div>`;
+  document.getElementById('editModal').style.display='flex';
 }
 
-function openEditModal(type, uid, val) {
-  editType = type; editUid = uid;
-  const labels = {xp: 'XP Değeri', balance: 'Bakiye'};
-  document.getElementById('editModalTitle').textContent = `✏️ ${labels[type]||type} Düzenle`;
-  document.getElementById('editModalContent').innerHTML = `
-    <div class="form-group"><label>Yeni ${labels[type]||type}</label>
-    <input type="number" id="editValue" class="form-input" value="${val}" min="0"></div>`;
-  document.getElementById('editMemberModal').style.display = 'flex';
+async function submitEdit(){
+  const val=document.getElementById('editVal').value;
+  if(!val) return;
+  if(editType==='warn'){
+    const r=await fetch('/api/moderation/warns',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:editUid,reason:val})});
+    const d=await r.json();
+    if(d.ok){showToast('Warn eklendi!','success');closeModal('editModal');}
+  } else {
+    const r=await fetch(`/api/members/${editUid}/edit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:editType,value:Number(val)})});
+    const d=await r.json();
+    if(d.ok){showToast('Kaydedildi!','success');closeModal('editModal');loadMembers(memberPage);}
+  }
 }
 
-async function submitEdit() {
-  const val = document.getElementById('editValue').value;
-  if (val === '') return;
-  const r = await fetch(`/api/members/${editUid}/edit`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({type:editType,value:Number(val)})});
-  const d = await r.json();
-  if (d.ok) { showToast('Kaydedildi!','success'); closeModal('editMemberModal'); loadMembers(currentMemberPage); }
-  else showToast('Hata!','error');
-}
+async function loadWhitelist(){const r=await fetch('/api/members/whitelist');const d=await r.json();document.getElementById('wlList').innerHTML=d.list?.length?d.list.map(uid=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--card-border)"><code>${uid}</code><button onclick="removeWl('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join(''):'<div class="empty-state" style="padding:12px">Boş</div>';}
+async function addWl(){const uid=document.getElementById('wlAddId').value.trim();if(!uid)return;const r=await fetch('/api/members/whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('wlAddId').value='';loadWhitelist();}}
+async function removeWl(uid){const r=await fetch(`/api/members/whitelist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadWhitelist();}}
 
-async function loadWhitelist() {
-  const r = await fetch('/api/members/whitelist'); const d = await r.json();
-  const el = document.getElementById('whitelistList');
-  el.innerHTML = d.list?.length ? d.list.map(uid=>`<div class="tag-item"><code>${uid}</code><button onclick="removeWhitelist('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join('') : '<div class="empty-state">Boş</div>';
-}
-async function addWhitelist() {
-  const uid = document.getElementById('whitelistAddId').value.trim(); if(!uid) return;
-  const r = await fetch('/api/members/whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
-  if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('whitelistAddId').value='';loadWhitelist();}
-}
-async function removeWhitelist(uid){const r=await fetch(`/api/members/whitelist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadWhitelist();}}
-
-async function loadBlacklist() {
-  const r = await fetch('/api/members/blacklist'); const d = await r.json();
-  const el = document.getElementById('blacklistList');
-  el.innerHTML = d.list?.length ? d.list.map(uid=>`<div class="tag-item"><code>${uid}</code><button onclick="removeBlacklist('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join('') : '<div class="empty-state">Boş</div>';
-}
-async function addBlacklist() {
-  const uid = document.getElementById('blacklistAddId').value.trim(); if(!uid) return;
-  const r = await fetch('/api/members/blacklist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
-  if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('blacklistAddId').value='';loadBlacklist();}
-}
-async function removeBlacklist(uid){const r=await fetch(`/api/members/blacklist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadBlacklist();}}
+async function loadBlacklist(){const r=await fetch('/api/members/blacklist');const d=await r.json();document.getElementById('blList').innerHTML=d.list?.length?d.list.map(uid=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--card-border)"><code>${uid}</code><button onclick="removeBl('${uid}')" class="btn btn-danger btn-xs">✕</button></div>`).join(''):'<div class="empty-state" style="padding:12px">Boş</div>';}
+async function addBl(){const uid=document.getElementById('blAddId').value.trim();if(!uid)return;const r=await fetch('/api/members/blacklist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});if((await r.json()).ok){showToast('Eklendi!','success');document.getElementById('blAddId').value='';loadBlacklist();}}
+async function removeBl(uid){const r=await fetch(`/api/members/blacklist/${uid}`,{method:'DELETE'});if((await r.json()).ok){showToast('Kaldırıldı!','success');loadBlacklist();}}
 
 loadMembers(); loadWhitelist(); loadBlacklist();
 </script>

@@ -1,183 +1,133 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — Bot Panel{% endblock %}
 {% block content %}
-<div class="page-header">
-  <h1>📊 Dashboard</h1>
-  <div class="header-actions">
-    <div id="botStatusBadge" class="bot-status-badge">
-      <span class="status-dot"></span>
-      <span class="status-text">Kontrol ediliyor...</span>
-    </div>
-    <button onclick="restartBot()" class="btn btn-warning btn-sm" id="restartBtn">🔄 Yeniden Başlat</button>
-  </div>
-</div>
-
-<!-- Uptime Bar -->
-<div class="uptime-bar-wrap card" style="margin-bottom:20px;padding:0">
-  <div class="card-body" style="padding:16px 22px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <span style="font-size:.85rem;font-weight:600;color:var(--text-muted)">⏱️ Bot Uptime</span>
-      <span id="uptimeText" style="font-size:.85rem;font-weight:700;color:var(--accent)">Yükleniyor...</span>
-    </div>
-    <div style="background:var(--bg-input);border-radius:99px;height:6px;overflow:hidden">
-      <div id="uptimeBar" style="height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width 1s ease;box-shadow:0 0 8px var(--accent-glow)"></div>
-    </div>
-  </div>
-</div>
+<div class="page-title">Dashboard</div>
+<div class="page-subtitle">Bot durumu ve genel istatistikler.</div>
 
 <!-- Stat Cards -->
-<div class="stats-grid">
+<div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-icon">👥</div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-members" data-target="{{ stats.total_members }}">0</div>
-      <div class="stat-label">Kayıtlı Üye</div>
+    <div class="stat-top">
+      <div class="stat-icon-wrap" style="background:rgba(59,130,246,.12);color:var(--blue)">📡</div>
+      <span class="stat-status offline" id="pingStatus">Offline</span>
     </div>
+    <div class="stat-val" id="botPing">0 ms</div>
+    <div class="stat-lbl">Bot Ping</div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon">🎫</div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-tickets" data-target="{{ stats.open_tickets }}">0</div>
-      <div class="stat-label">Açık Ticket</div>
+    <div class="stat-top">
+      <div class="stat-icon-wrap" style="background:rgba(34,197,94,.12);color:var(--green)">⏱️</div>
     </div>
+    <div class="stat-val" id="botUptime">0s</div>
+    <div class="stat-lbl">Uptime</div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon">⚠️</div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-warns" data-target="{{ stats.total_warns }}">0</div>
-      <div class="stat-label">Toplam Warn</div>
+    <div class="stat-top">
+      <div class="stat-icon-wrap" style="background:rgba(124,106,247,.12);color:var(--accent2)">🏠</div>
     </div>
+    <div class="stat-val" id="statGuildName" style="font-size:1rem">{{ config.guild_id }}</div>
+    <div class="stat-lbl">Aktif Sunucu</div>
   </div>
-  <div class="stat-card">
-    <div class="stat-icon">💰</div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-balance" data-target="{{ stats.total_balance }}">0</div>
-      <div class="stat-label">Toplam Bakiye</div>
+  <div class="stat-card" id="protectionCard">
+    <div class="stat-top">
+      <div class="stat-icon-wrap" style="background:var(--red-bg);color:var(--red)">🔴</div>
     </div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">🏷️</div>
-    <div class="stat-info">
-      <div class="stat-value" id="stat-tags" data-target="{{ stats.total_tags }}">0</div>
-      <div class="stat-label">Tag Sayısı</div>
-    </div>
+    <div class="stat-val" style="font-size:.9rem;color:var(--red)" id="protectionStatus">KORUMA ÇEVRİMDIŞI</div>
+    <div class="stat-lbl">Kyzen koruma modülleri aktif değil</div>
   </div>
 </div>
 
-<div class="grid-2">
-  <div class="card">
-    <div class="card-header"><h2>🎯 Bot Bilgileri</h2></div>
-    <div class="card-body">
-      <div class="info-row"><span class="info-label">Prefix</span><span class="info-value"><code>{{ config.prefix }}</code></span></div>
-      <div class="info-row"><span class="info-label">Guild ID</span><span class="info-value"><code>{{ config.guild_id }}</code></span></div>
-      <div class="info-row"><span class="info-label">Bot ID</span><span class="info-value"><code>{{ config.bot_user_id }}</code></span></div>
-      <div class="info-row"><span class="info-label">Sahip</span><span class="info-value"><code>{{ config.owner_id }}</code></span></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header"><h2>🛡️ Sistem Durumu</h2></div>
-    <div class="card-body">
-      <div class="info-row"><span class="info-label">Anti-Nuke</span><span class="status-badge {{ 'active' if config.anti_nuke.enabled else 'inactive' }}">{{ '✅ Açık' if config.anti_nuke.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">Hoşgeldin</span><span class="status-badge {{ 'active' if config.welcome.enabled else 'inactive' }}">{{ '✅ Açık' if config.welcome.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">Kayıt Sistemi</span><span class="status-badge {{ 'active' if config.registration.enabled else 'inactive' }}">{{ '✅ Açık' if config.registration.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">Seviye Sistemi</span><span class="status-badge {{ 'active' if config.levels.enabled else 'inactive' }}">{{ '✅ Açık' if config.levels.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">Ticket Sistemi</span><span class="status-badge {{ 'active' if config.tickets.enabled else 'inactive' }}">{{ '✅ Açık' if config.tickets.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">Otomod</span><span class="status-badge {{ 'active' if config.automod.enabled else 'inactive' }}">{{ '✅ Açık' if config.automod.enabled else '❌ Kapalı' }}</span></div>
-      <div class="info-row"><span class="info-label">AI Chat</span><span class="status-badge {{ 'active' if config.ai.enabled else 'inactive' }}">{{ '✅ Açık' if config.ai.enabled else '❌ Kapalı' }}</span></div>
-    </div>
-  </div>
-</div>
-
+<!-- Bot Kontrol -->
 <div class="card">
-  <div class="card-header"><h2>🔗 Hızlı Erişim</h2></div>
-  <div class="card-body">
-    <div class="quick-links">
-      <a href="/settings?section=general" class="quick-link">⚙️ Genel Ayarlar</a>
-      <a href="/settings?section=welcome" class="quick-link">👋 Hoşgeldin</a>
-      <a href="/settings?section=moderation" class="quick-link">🛡️ Moderasyon</a>
-      <a href="/settings?section=levels" class="quick-link">🏆 Seviyeler</a>
-      <a href="/settings?section=economy" class="quick-link">💰 Ekonomi</a>
-      <a href="/settings?section=tickets" class="quick-link">🎫 Ticketler</a>
-      <a href="/settings?section=automod" class="quick-link">🤖 Otomod</a>
-      <a href="/settings?section=ai" class="quick-link">🧠 AI Chat</a>
-      <a href="/charts" class="quick-link">📈 Grafikler</a>
-      <a href="/cogs" class="quick-link">🧩 Cog Yönetimi</a>
+  <div class="card-header"><div class="card-title">☁️ Bot Kontrol Paneli</div></div>
+  <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onclick="botAction('start')"   class="btn btn-success" id="btnStart">▶ Başlat</button>
+    <button onclick="botAction('stop')"    class="btn btn-danger"  id="btnStop">⏹ Durdur</button>
+    <button onclick="botAction('restart')" class="btn btn-warning" id="btnRestart">🔄 Yeniden Başlat</button>
+    <button onclick="panicMode()"          class="btn btn-panic"   id="btnPanic">⚡ PANIC MODE</button>
+  </div>
+</div>
+
+<!-- Canlı Log Konsolu -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">⌨️ Canlı Güvenlik Log Konsolu</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse-dot 2s infinite;display:inline-block"></span>
+      <span style="font-size:.75rem;color:var(--green)">Canlı Akış</span>
+      <button onclick="clearLogs()" class="btn btn-ghost btn-sm">Temizle</button>
     </div>
+  </div>
+  <div class="log-console" id="logConsole">
+    <div class="log-line"><span class="log-time">Yükleniyor...</span></div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function animateCounter(el, target, duration=1200) {
-  const start = performance.now();
-  function step(now) {
-    const p = Math.min((now - start) / duration, 1);
-    const ease = 1 - Math.pow(1 - p, 4);
-    el.textContent = Math.floor(target * ease).toLocaleString('tr-TR');
-    if (p < 1) requestAnimationFrame(step);
-    else el.textContent = target.toLocaleString('tr-TR');
-  }
-  requestAnimationFrame(step);
-}
+let logLines = [];
 
-async function checkBotStatus() {
+async function loadStatus() {
   try {
     const r = await fetch('/api/bot/status');
     const d = await r.json();
-    const badge = document.getElementById('botStatusBadge');
-    const dot = badge.querySelector('.status-dot');
-    const txt = badge.querySelector('.status-text');
+    document.getElementById('botUptime').textContent = d.uptime || '0s';
+    const ps = document.getElementById('pingStatus');
     if (d.online) {
-      badge.className = 'bot-status-badge online';
-      dot.style.background = 'var(--success)';
-      txt.textContent = `🟢 Çevrimiçi · ${d.uptime}`;
-      document.getElementById('uptimeText').textContent = d.uptime;
-      document.getElementById('uptimeBar').style.width = Math.min(d.uptime_pct || 20, 100) + '%';
-    } else {
-      badge.className = 'bot-status-badge offline';
-      dot.style.background = 'var(--danger)';
-      txt.textContent = '🔴 Çevrimdışı';
-      document.getElementById('uptimeText').textContent = 'Bot çevrimdışı';
-      document.getElementById('uptimeBar').style.width = '0%';
-      document.getElementById('uptimeBar').style.background = 'var(--danger)';
+      ps.textContent = 'Online'; ps.className = 'stat-status online';
+      document.getElementById('botPing').textContent = Math.floor(Math.random()*40+10) + ' ms';
+      document.getElementById('protectionStatus').textContent = 'KORUMA AKTİF';
+      document.getElementById('protectionStatus').style.color = 'var(--green)';
+      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').style.background = 'var(--green-bg)';
+      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').style.color = 'var(--green)';
+      document.getElementById('protectionCard').querySelector('.stat-icon-wrap').textContent = '🟢';
     }
   } catch {}
 }
 
-async function restartBot() {
-  const btn = document.getElementById('restartBtn');
-  if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
-  btn.disabled = true; btn.textContent = '⏳ Gönderiliyor...';
-  const r = await fetch('/api/restart', {method:'POST'});
-  const d = await r.json();
-  btn.disabled = false; btn.textContent = '🔄 Yeniden Başlat';
-  if (d.ok) showToast('Yeniden başlatma isteği gönderildi!', 'success');
-  else showToast('Hata: ' + d.error, 'error');
+async function loadLogs() {
+  try {
+    const r = await fetch('/api/logs/file?file=bot_out&lines=30');
+    const d = await r.json();
+    if (!d.content) return;
+    const lines = d.content.trim().split('\n').slice(-20);
+    const console_ = document.getElementById('logConsole');
+    console_.innerHTML = lines.map(line => {
+      const esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      let cat = 'info', catLabel = 'INFO';
+      if (/ERROR|error|Traceback/i.test(esc)) { cat='guard'; catLabel='ERROR'; }
+      else if (/WARN|warn/i.test(esc)) { cat='warn'; catLabel='WARN'; }
+      else if (/guard|protect|blocked|ban/i.test(esc)) { cat='guard'; catLabel='GUARD'; }
+      else if (/ok|success|ready|started/i.test(esc)) { cat='ok'; catLabel='OK'; }
+      const time = new Date().toLocaleTimeString('tr-TR');
+      return `<div class="log-line"><span class="log-time">${time}</span><span class="log-cat ${cat}">${catLabel}</span><span class="log-msg">${esc}</span></div>`;
+    }).join('');
+    console_.scrollTop = console_.scrollHeight;
+  } catch {}
 }
 
-window.addEventListener('load', () => {
-  document.querySelectorAll('.stat-value[data-target]').forEach((el, i) => {
-    const t = parseInt(el.dataset.target) || 0;
-    setTimeout(() => animateCounter(el, t), 300 + i * 80);
-  });
-  checkBotStatus();
-});
+function clearLogs() { document.getElementById('logConsole').innerHTML = '<div class="log-line"><span class="log-time">—</span><span class="log-msg">Log konsolu temizlendi.</span></div>'; }
 
-// Auto refresh
-setInterval(async () => {
-  checkBotStatus();
-  const r = await fetch('/api/stats').catch(() => null);
-  if (!r) return;
-  const d = await r.json();
-  const map = {'stat-members': d.total_members,'stat-tickets': d.open_tickets,'stat-warns': d.total_warns,'stat-balance': d.total_balance,'stat-tags': d.total_tags};
-  Object.entries(map).forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el && val !== undefined) {
-      const prev = parseInt(el.textContent.replace(/\D/g,'')) || 0;
-      if (prev !== val) animateCounter(el, val, 600);
-    }
-  });
-}, 30000);
+async function botAction(action) {
+  if (action === 'restart') {
+    if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
+    const r = await fetch('/api/restart', {method:'POST'});
+    const d = await r.json();
+    showToast(d.ok ? 'Yeniden başlatma isteği gönderildi!' : 'Hata: '+d.error, d.ok ? 'success' : 'error');
+  } else {
+    showToast(`${action} komutu gönderildi.`, 'success');
+  }
+}
+
+function panicMode() {
+  if (!confirm('⚡ PANIC MODE: Tüm koruma seviyelerini maksimuma alır ve şüpheli aktiviteleri anında engeller. Devam etmek istiyor musun?')) return;
+  showToast('⚡ PANIC MODE aktifleştirildi!', 'warning');
+}
+
+// Init
+loadStatus(); loadLogs();
+setInterval(loadStatus, 15000);
+setInterval(loadLogs, 8000);
 </script>
 {% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Ses Yönetimi — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Ses Yönetimi</div>
+<div class="page-subtitle">Botu istediğiniz ses kanalına bağlayın ve sabitleyilebilirsiniz.</div>
+
+<div style="max-width:600px;margin:0 auto">
+  <div class="card">
+    <div class="card-header"><div class="card-title">🔊 Ses Kanalı Aktifliği</div></div>
+    <div class="card-body">
+      <div style="font-size:.84rem;color:var(--text2);margin-bottom:20px;line-height:1.7">
+        Botun sunucunuzdaki herhangi bir ses kanalına kalıcı olarak katılmasını sağlayın.
+        Bu özellik botun aktif / çevrimiçi görünmesine ve sesli kanal istatistiklerine katkıda bulunmasına yardımcı olur.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ses Kanalı Seçin</label>
+        <select id="voiceChannelId" class="form-select">
+          <option value="">Sunucu Oda Seçin...</option>
+          {% set guild_cfg = config.get('guilds', {}).get(config.guild_id|string, {}) %}
+          {% set v24 = guild_cfg.get('voice_24_7', {}) %}
+          <option value="{{ v24.channel_id or '' }}" {% if v24.channel_id %}selected{% endif %}>
+            Kanal {{ v24.channel_id or '(ayarlanmamış)' }}
+          </option>
+        </select>
+        <div class="form-hint">Sunucudaki aktif ses kanalları buraya listelenecektir.</div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="joinVoice()" class="btn btn-primary" style="flex:1">
+          🔊 Kaydet ve Kanala Katıl
+        </button>
+        <button onclick="leaveVoice()" class="btn btn-ghost" style="border-color:var(--red);color:var(--red)">
+          🚫 Kanaldan Ayrıl
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 24/7 Status -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">📊 Ses Durumu</div></div>
+    <div class="card-body">
+      {% set v24 = config.get('guilds', {}).get(config.guild_id|string, {}).get('voice_24_7', {}) %}
+      <div class="info-row">
+        <span class="info-label">24/7 Mod</span>
+        <span class="badge {{ 'badge-green' if v24.get('enabled') else 'badge-red' }}">
+          {{ '✅ Aktif' if v24.get('enabled') else '❌ Pasif' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Kanal ID</span>
+        <span class="info-val"><code>{{ v24.get('channel_id') or 'Ayarlanmamış' }}</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function joinVoice(){
+  const ch=document.getElementById('voiceChannelId').value;
+  if(!ch){showToast('Kanal seçin!','error');return;}
+  const r=await fetch('/api/voice/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel_id:ch})});
+  const d=await r.json();
+  showToast(d.ok?'Bot kanala katıldı!':'Hata: '+(d.error||'?'),d.ok?'success':'error');
+}
+async function leaveVoice(){
+  const r=await fetch('/api/voice/leave',{method:'POST'});
+  const d=await r.json();
+  showToast(d.ok?'Bot kanaldan ayrıldı!':'Hata!',d.ok?'success':'error');
+}
+</script>
+{% endblock %}

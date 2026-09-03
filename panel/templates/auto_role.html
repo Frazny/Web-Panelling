@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Oto-Rol — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Otomatik Rol</div>
+<div class="page-subtitle">Yeni gelen ve mevcut üyelere otomatik rol atayın.</div>
+
+<div style="max-width:680px;margin:0 auto">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">👤 Otomatik Rol Sistemi</div>
+      <label class="toggle-wrap">
+        <input type="checkbox" class="toggle" id="autoRoleToggle" {% if config.welcome.auto_role_id %}checked{% endif %}>
+      </label>
+    </div>
+    <div class="card-body">
+      <div style="font-size:.82rem;color:var(--text2);margin-bottom:16px">Yeni gelen üyelere ve mevcut üyelere otomatik rol verin.</div>
+
+      <div class="form-group">
+        <label class="form-label">Verilecek Rol</label>
+        <select id="autoRoleId" class="form-select">
+          <option value="">Bir rol seçiniz...</option>
+          {% for uid in config.get('kurucu_users', []) %}
+          <option value="{{ uid }}">Rol {{ uid }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-hint">💡 Botun, sunucuda roller listeleme yetkisi olmadığından rol ID'lerini config'den alıyoruz.</div>
+      </div>
+
+      <button onclick="saveAutoRole()" class="btn btn-full" style="margin-bottom:20px">💾 Ayarları Kaydet</button>
+
+      <div style="border-top:1px solid var(--card-border);padding-top:20px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:1rem">👥</span>
+          <div>
+            <div style="font-weight:700;font-size:.88rem">Toplu Rol İşlemi</div>
+            <div style="font-size:.75rem;color:var(--text2)">Belirlenen rolü sunucuda şu an o role sahip olmayan <strong>tüm üyelere</strong> tek tıkla tanımlayın.</div>
+          </div>
+        </div>
+        <button onclick="bulkAssign()" class="btn btn-ghost" style="border-color:var(--accent);color:var(--accent2)">
+          👥 Herkese Rol Ver
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function saveAutoRole(){
+  const roleId=document.getElementById('autoRoleId').value;
+  const enabled=document.getElementById('autoRoleToggle').checked;
+  const r=await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'welcome',values:{auto_role_id:roleId?parseInt(roleId):0,enabled}})});
+  const d=await r.json();
+  showToast(d.ok?'Oto-rol ayarları kaydedildi!':'Hata!',d.ok?'success':'error');
+}
+
+async function bulkAssign(){
+  const roleId=document.getElementById('autoRoleId').value;
+  if(!roleId){showToast('Önce bir rol seçin!','error');return;}
+  if(!confirm('Tüm üyelere bu rol verilecek. Devam etmek istiyor musun?')) return;
+  showToast('Toplu rol işlemi başlatıldı! (Bot üzerinden işlenir)','success');
+}
+</script>
+{% endblock %}

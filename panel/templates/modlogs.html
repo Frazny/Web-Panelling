@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Mod Logları — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Mod Logları</div>
+<div class="page-subtitle">Son gerçekleşen moderasyon eylemleri.</div>
+
+<div class="card">
+  <div class="card-header" style="flex-wrap:wrap;gap:10px">
+    <div class="card-title">📋 Moderasyon Logları</div>
+    <input type="text" id="logSearch" class="search-input" placeholder="İsim veya ID ile ara..." oninput="searchLogs()" style="width:220px">
+  </div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Tarih</th>
+          <th>Kullanıcı</th>
+          <th>Guard / Moderatör</th>
+          <th>Eylem</th>
+        </tr>
+      </thead>
+      <tbody id="modlogsTbody">
+        <tr><td colspan="4" class="empty-state">Yükleniyor...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="modlogsPagination" class="pagination-wrap"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let logPage=1, logTimer;
+
+function fmtDate(ts){return ts?new Date(ts*1000).toLocaleString('tr-TR'):'-';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function renderPagination(cid,cur,total,fn){
+  const el=document.getElementById(cid);if(!el||total<=1){if(el)el.innerHTML='';return;}
+  let h='<div class="pagination">';
+  if(cur>1)h+=`<button class="pg-btn" onclick="${fn}(${cur-1})">‹</button>`;
+  for(let i=Math.max(1,cur-2);i<=Math.min(total,cur+2);i++)h+=`<button class="pg-btn ${i===cur?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  if(cur<total)h+=`<button class="pg-btn" onclick="${fn}(${cur+1})">›</button>`;
+  h+='</div>'; el.innerHTML=h;
+}
+
+function searchLogs(){clearTimeout(logTimer);logTimer=setTimeout(()=>loadLogs(1),400);}
+
+const ACTION_COLORS = {
+  'DELETE':       'badge-red',
+  'TIMEOUT':      'badge-yellow',
+  'ILLEGAL ROLE': 'badge-red',
+  'ILLEGAL CHANNEL':'badge-red',
+  'GUARD':        'badge-purple',
+  'BAN':          'badge-red',
+  'KICK':         'badge-yellow',
+  'WARN':         'badge-yellow',
+};
+
+function actionBadge(reason){
+  const upper = String(reason||'').toUpperCase();
+  let cls='badge-gray';
+  for(const [k,v] of Object.entries(ACTION_COLORS)){if(upper.includes(k)){cls=v;break;}}
+  return `<span class="badge ${cls}" style="font-size:.72rem;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(reason)}</span>`;
+}
+
+async function loadLogs(page=1){
+  logPage=page;
+  const search=document.getElementById('logSearch').value.trim();
+  const tbody=document.getElementById('modlogsTbody');
+  tbody.innerHTML='<tr><td colspan="4" class="empty-state">Yükleniyor...</td></tr>';
+  const r=await fetch(`/api/moderation/warns/with_users?page=${page}&per_page=15`);
+  const d=await r.json();
+  if(!d.warns?.length){tbody.innerHTML='<tr><td colspan="4" class="empty-state">Log bulunamadı</td></tr>';return;}
+  tbody.innerHTML=d.warns.map(w=>`
+    <tr>
+      <td style="color:var(--text2);font-size:.78rem;white-space:nowrap">
+        <span style="color:var(--text3);font-size:.7rem">🕐</span> ${fmtDate(w.created)}
+      </td>
+      <td>
+        <div class="user-cell">
+          <img src="${w.user_avatar}" class="user-cell-avatar" style="width:28px;height:28px" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+          <div>
+            <div class="user-cell-name">${esc(w.user_name)}</div>
+            <div class="user-cell-id" style="display:flex;align-items:center;gap:4px">${w.user_id} <span style="cursor:pointer;color:var(--accent2);font-size:.65rem" onclick="navigator.clipboard.writeText('${w.user_id}')">📋</span></div>
+          </div>
+        </div>
+      </td>
+      <td style="color:var(--text2);font-size:.82rem">${esc(w.mod_name)}</td>
+      <td>${actionBadge(w.reason)}</td>
+    </tr>`).join('');
+  renderPagination('modlogsPagination',page,d.pages,'loadLogs');
+}
+
+loadLogs();
+</script>
+{% endblock %}

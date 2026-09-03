@@ -6,220 +6,165 @@
   <title>{% block title %}Bot Panel{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    /* Page transition overlay */
-    #page-loader {
-      position: fixed; inset: 0; z-index: 9998;
-      background: var(--bg-base);
-      display: flex; align-items: center; justify-content: center;
-      transition: opacity .35s ease, visibility .35s ease;
-    }
-    #page-loader.hidden { opacity: 0; visibility: hidden; }
-
-    .loader-ring {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(108,99,255,0.15);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Sidebar tooltip on hover */
-    .nav-link .nav-badge {
-      margin-left: auto;
-      background: var(--danger);
-      color: white;
-      font-size: .65rem;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 99px;
-      min-width: 18px;
-      text-align: center;
-    }
-
-    /* Active page indicator line at top */
-    .top-bar {
-      position: fixed; top: 0; left: var(--sidebar-width); right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
-      z-index: 99;
-      animation: slideRight .5s ease;
-    }
-    @keyframes slideRight { from { width: 0; } to { width: 100%; } }
-  </style>
 </head>
 <body>
-  <!-- Page loader -->
   <div id="page-loader"><div class="loader-ring"></div></div>
-  <div class="top-bar"></div>
 
+  <!-- SIDEBAR -->
   <nav class="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-icon">🤖</div>
-      <span>Bot Panel</span>
+    <div class="sidebar-server">
+      <div class="server-icon" id="sidebarServerIcon">K</div>
+      <div class="server-info">
+        <div class="server-name" id="sidebarServerName">{{ config.get('guild_id','—') }}</div>
+        <div class="server-status" id="sidebarStatus">Bağlanıyor...</div>
+      </div>
     </div>
 
+    <div class="nav-section"><span class="nav-section-label">Genel</span></div>
     <div class="nav-links">
-      <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
-        <span class="nav-icon">📊</span> Dashboard
-      </a>
-      <a href="/settings?section=general" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
-        <span class="nav-icon">⚙️</span> Ayarlar
-      </a>
-
-      <div class="nav-section-label">Moderasyon</div>
-
-      <a href="/moderation" class="nav-link {% if request.path == '/moderation' %}active{% endif %}">
-        <span class="nav-icon">🛡️</span> Moderasyon
-      </a>
-      <a href="/tickets" class="nav-link {% if request.path == '/tickets' %}active{% endif %}">
-        <span class="nav-icon">🎫</span> Ticketlar
-      </a>
-      <a href="/members" class="nav-link {% if request.path == '/members' %}active{% endif %}">
-        <span class="nav-icon">👥</span> Üyeler
-      </a>
-
-      <div class="nav-section-label">İstatistik</div>
-
-      <a href="/levels" class="nav-link {% if request.path == '/levels' %}active{% endif %}">
-        <span class="nav-icon">🏆</span> Seviyeler
-      </a>
-      <a href="/economy" class="nav-link {% if request.path == '/economy' %}active{% endif %}">
-        <span class="nav-icon">💰</span> Ekonomi
-      </a>
-      <a href="/charts" class="nav-link {% if request.path == '/charts' %}active{% endif %}">
-        <span class="nav-icon">📈</span> Grafikler
-      </a>
-
-      <div class="nav-section-label">Sistem</div>
-
-      <a href="/cogs" class="nav-link {% if request.path == '/cogs' %}active{% endif %}">
-        <span class="nav-icon">🧩</span> Cog Yönetimi
-      </a>
-      <a href="/logs" class="nav-link {% if request.path == '/logs' %}active{% endif %}">
-        <span class="nav-icon">📋</span> Loglar
-      </a>
+      <a href="/dashboard"   class="nav-link {% if request.path=='/dashboard' %}active{% endif %}"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="/statistics"  class="nav-link {% if request.path=='/statistics' %}active{% endif %}"><span class="nav-icon">📈</span>İstatistikler</a>
     </div>
 
-    <div class="sidebar-footer">
-      <div class="sidebar-footer-top">
-        <!-- Bot Status -->
-        <div id="sidebarBotStatus" class="sidebar-bot-status">
-          <span class="mini-status-dot"></span>
-          <span class="mini-status-text">Bot kontrol ediliyor...</span>
-        </div>
-        <!-- Theme Toggle -->
-        <button onclick="toggleTheme()" id="themeToggleBtn" class="theme-toggle-btn" title="Tema Değiştir">🌙</button>
-      </div>
-      <div class="user-info">
-        {% if user.avatar %}
-        <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" class="avatar" alt="">
-        {% else %}
-        <div class="avatar avatar-default">{{ user.username[0] }}</div>
-        {% endif %}
-        <span class="username">{{ user.username }}</span>
-      </div>
-      <a href="/logout" class="nav-link logout">
-        <span class="nav-icon">🚪</span> Çıkış Yap
-      </a>
+    <div class="nav-section"><span class="nav-section-label">Moderasyon</span></div>
+    <div class="nav-links">
+      <a href="/members"     class="nav-link {% if request.path=='/members' %}active{% endif %}"><span class="nav-icon">👥</span>Üye Yönetimi</a>
+      <a href="/modlogs"     class="nav-link {% if request.path=='/modlogs' %}active{% endif %}"><span class="nav-icon">📋</span>Loglar</a>
+      <a href="/message-send" class="nav-link {% if request.path=='/message-send' %}active{% endif %}"><span class="nav-icon">✉️</span>Mesaj Gönder</a>
+    </div>
+
+    <div class="nav-section"><span class="nav-section-label">Koruma</span></div>
+    <div class="nav-links">
+      <a href="/protection"       class="nav-link {% if request.path=='/protection' %}active{% endif %}"><span class="nav-icon">🛡️</span>Koruma &amp; Limit</a>
+      <a href="/server-protection" class="nav-link {% if request.path=='/server-protection' %}active{% endif %}"><span class="nav-icon">🔰</span>Sunucu Koruma</a>
+      <a href="/ai-antiraid"      class="nav-link {% if request.path=='/ai-antiraid' %}active{% endif %}"><span class="nav-icon">🤖</span>AI Anti-Raid<span class="nav-badge ai-badge">AI</span></a>
+    </div>
+
+    <div class="nav-section"><span class="nav-section-label">Sistemler</span></div>
+    <div class="nav-links">
+      <a href="/tickets"     class="nav-link {% if request.path=='/tickets' %}active{% endif %}"><span class="nav-icon">🎫</span>Ticket Paneli</a>
+      <a href="/auto-reply"  class="nav-link {% if request.path=='/auto-reply' %}active{% endif %}"><span class="nav-icon">💬</span>Oto-Cevaplar</a>
+      <a href="/embed-builder" class="nav-link {% if request.path=='/embed-builder' %}active{% endif %}"><span class="nav-icon">✏️</span>Embed Builder</a>
+      <a href="/auto-role"   class="nav-link {% if request.path=='/auto-role' %}active{% endif %}"><span class="nav-icon">👤</span>Oto-Rol</a>
+      <a href="/voice"       class="nav-link {% if request.path=='/voice' %}active{% endif %}"><span class="nav-icon">🔊</span>Ses Yönetimi</a>
+      <a href="/music"       class="nav-link {% if request.path=='/music' %}active{% endif %}"><span class="nav-icon">🎵</span>Müzik Çalar</a>
+      <a href="/giveaway"    class="nav-link {% if request.path=='/giveaway' %}active{% endif %}"><span class="nav-icon">🎁</span>Çekilişler</a>
+    </div>
+
+    <div class="nav-section"><span class="nav-section-label">Yönetim</span></div>
+    <div class="nav-links">
+      <a href="/bot-settings" class="nav-link {% if request.path=='/bot-settings' %}active{% endif %}"><span class="nav-icon">⚙️</span>Bot Ayarları</a>
+      <a href="/backup"      class="nav-link {% if request.path=='/backup' %}active{% endif %}"><span class="nav-icon">💾</span>Sunucu Yedekleme</a>
+      <a href="/account"     class="nav-link {% if request.path=='/account' %}active{% endif %}"><span class="nav-icon">👤</span>Hesap Detayları</a>
+    </div>
+
+    <div class="nav-section"><span class="nav-section-label">Gelişmiş</span></div>
+    <div class="nav-links">
+      <a href="/cogs"        class="nav-link {% if request.path=='/cogs' %}active{% endif %}"><span class="nav-icon">🧩</span>Cog Yönetimi</a>
+      <a href="/logs"        class="nav-link {% if request.path=='/logs' %}active{% endif %}"><span class="nav-icon">🖥️</span>Bot Logları</a>
+      <a href="/settings?section=general" class="nav-link {% if request.path=='/settings' %}active{% endif %}"><span class="nav-icon">🔧</span>Eski Ayarlar</a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a href="/logout" class="nav-link" style="color:var(--red)"><span class="nav-icon">🚪</span>Çıkış Yap</a>
     </div>
   </nav>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button onclick="toggleTheme()" class="theme-btn" id="themeBtn" title="Tema">🌙</button>
+    <div class="topbar-server-select" onclick="window.location='/dashboard'">
+      <div class="topbar-server-icon" id="topbarIcon">K</div>
+      <span id="topbarName">Sunucu</span>
+      <span style="color:var(--text3);font-size:.8rem">▾</span>
+    </div>
+    <div class="topbar-user" onclick="window.location='/account'">
+      {% if user.avatar %}
+      <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" alt="">
+      {% else %}
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800">{{ user.username[0] }}</div>
+      {% endif %}
+      <span>{{ user.global_name or user.username }}</span>
+    </div>
+  </header>
 
   <main class="content">
     {% block content %}{% endblock %}
   </main>
 
   <div id="toastContainer"></div>
-
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   {% block scripts %}{% endblock %}
 
   <script>
-    // Hide page loader
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        document.getElementById('page-loader').classList.add('hidden');
-      }, 200);
-    });
+    // Page loader
+    window.addEventListener('load', () => setTimeout(() => document.getElementById('page-loader').classList.add('hidden'), 150));
 
-    // Page transition on nav click
-    document.querySelectorAll('.nav-link:not(.logout)').forEach(link => {
-      link.addEventListener('click', e => {
-        const href = link.getAttribute('href');
-        if (!href || href.startsWith('#')) return;
-        e.preventDefault();
-        const loader = document.getElementById('page-loader');
-        loader.classList.remove('hidden');
-        setTimeout(() => window.location.href = href, 250);
-      });
-    });
-
-    // Dark/Light theme
-    function applyTheme(theme) {
-      const root = document.documentElement;
-      const btn = document.getElementById('themeToggleBtn');
-      if (theme === 'light') {
-        root.style.setProperty('--bg-base', '#f0f2f8');
-        root.style.setProperty('--bg-primary', '#f5f7fc');
-        root.style.setProperty('--bg-secondary', '#ebedf5');
-        root.style.setProperty('--bg-card', '#ffffff');
-        root.style.setProperty('--bg-card-hover', '#f8f9ff');
-        root.style.setProperty('--bg-input', '#eef0f8');
-        root.style.setProperty('--border', 'rgba(0,0,0,0.08)');
-        root.style.setProperty('--border-hover', 'rgba(0,0,0,0.15)');
-        root.style.setProperty('--text', '#1a1d2e');
-        root.style.setProperty('--text-muted', '#7a7f99');
-        root.style.setProperty('--text-dim', '#4a4f6a');
-        if (btn) btn.textContent = '☀️';
-      } else {
-        root.style.removeProperty('--bg-base');
-        root.style.removeProperty('--bg-primary');
-        root.style.removeProperty('--bg-secondary');
-        root.style.removeProperty('--bg-card');
-        root.style.removeProperty('--bg-card-hover');
-        root.style.removeProperty('--bg-input');
-        root.style.removeProperty('--border');
-        root.style.removeProperty('--border-hover');
-        root.style.removeProperty('--text');
-        root.style.removeProperty('--text-muted');
-        root.style.removeProperty('--text-dim');
-        if (btn) btn.textContent = '🌙';
-      }
-    }
-
-    function toggleTheme() {
-      const current = localStorage.getItem('theme') || 'dark';
-      const next = current === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', next);
-      applyTheme(next);
-    }
-
-    // Apply saved theme on load
-    applyTheme(localStorage.getItem('theme') || 'dark');
-
-    // Sidebar bot status check
-    async function checkSidebarStatus() {
+    // Bot status sidebar
+    async function refreshSidebarStatus() {
       try {
         const r = await fetch('/api/bot/status');
         const d = await r.json();
-        const dot = document.querySelector('.mini-status-dot');
-        const txt = document.querySelector('.mini-status-text');
-        if (!dot || !txt) return;
+        const el = document.getElementById('sidebarStatus');
+        if (!el) return;
         if (d.online) {
-          dot.style.background = 'var(--success)';
-          dot.style.boxShadow = '0 0 6px var(--success)';
-          txt.textContent = 'Bot Çevrimiçi';
+          el.textContent = `${d.uptime || 'Çevrimiçi'}`;
+          el.style.color = 'var(--green)';
         } else {
-          dot.style.background = 'var(--danger)';
-          dot.style.boxShadow = '0 0 6px var(--danger)';
-          txt.textContent = 'Bot Çevrimdışı';
+          el.textContent = 'Çevrimdışı';
+          el.style.color = 'var(--red)';
         }
       } catch {}
     }
+    refreshSidebarStatus();
+    setInterval(refreshSidebarStatus, 30000);
 
-    checkSidebarStatus();
-    setInterval(checkSidebarStatus, 30000);
+    // Load server name
+    fetch('/api/config').then(r=>r.json()).then(cfg=>{
+      const gid = String(cfg.guild_id||'');
+      const name = cfg.server_name || ('Guild ' + gid.slice(-4));
+      document.getElementById('sidebarServerName').textContent = name;
+      document.getElementById('topbarName').textContent = name;
+      const letter = name[0]?.toUpperCase() || 'K';
+      document.getElementById('sidebarServerIcon').textContent = letter;
+      document.getElementById('topbarIcon').textContent = letter;
+    }).catch(()=>{});
+
+    // Theme
+    function applyTheme(t) {
+      const r = document.documentElement, b = document.getElementById('themeBtn');
+      if (t === 'light') {
+        r.style.setProperty('--bg','#f0f2f8');
+        r.style.setProperty('--bg2','#e8eaf2');
+        r.style.setProperty('--bg3','#dde0ee');
+        r.style.setProperty('--bg4','#d0d3e5');
+        r.style.setProperty('--text','#1a1d2e');
+        r.style.setProperty('--text2','#4a4f6a');
+        r.style.setProperty('--text3','#8b91aa');
+        r.style.setProperty('--card','rgba(255,255,255,0.8)');
+        r.style.setProperty('--card-border','rgba(0,0,0,0.08)');
+        if(b) b.textContent='☀️';
+      } else {
+        ['--bg','--bg2','--bg3','--bg4','--text','--text2','--text3','--card','--card-border'].forEach(v=>r.style.removeProperty(v));
+        if(b) b.textContent='🌙';
+      }
+    }
+    function toggleTheme() {
+      const n = (localStorage.getItem('theme')||'dark') === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', n); applyTheme(n);
+    }
+    applyTheme(localStorage.getItem('theme')||'dark');
+
+    // Page nav transition
+    document.querySelectorAll('.nav-link:not([href="/logout"])').forEach(a => {
+      a.addEventListener('click', e => {
+        const href = a.getAttribute('href');
+        if (!href || href.startsWith('#')) return;
+        e.preventDefault();
+        document.getElementById('page-loader').classList.remove('hidden');
+        setTimeout(() => location.href = href, 200);
+      });
+    });
   </script>
 </body>
 </html>

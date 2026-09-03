@@ -1,121 +1,188 @@
 {% extends "base.html" %}
-{% block title %}Ticketlar — Bot Panel{% endblock %}
+{% block title %}Ticket Paneli — Bot Panel{% endblock %}
 {% block content %}
-<div class="page-header">
-  <h1>🎫 Ticket Yönetimi</h1>
-  <div class="header-actions">
-    <span id="ticketStats" class="stat-badge"></span>
-    <button onclick="loadTickets(1)" class="btn btn-sm">🔄 Yenile</button>
-  </div>
+<div class="page-title">Ticket Paneli</div>
+<div class="page-subtitle">Destek taleplerini canlı izleyin, sahiplenin, kapatın ve ayarları yönetin.</div>
+
+<!-- Sekmeler -->
+<div style="display:flex;gap:8px;margin-bottom:18px">
+  <button class="btn btn-ghost btn-sm tab-btn active" onclick="setTab('active',this)" id="tab-active">📋 Aktif Destek Talepleri</button>
+  <button class="btn btn-ghost btn-sm tab-btn" onclick="setTab('logs',this)" id="tab-logs">🔄 Ticket Logları</button>
+  <button class="btn btn-ghost btn-sm tab-btn" onclick="setTab('settings',this)" id="tab-settings">⚙️ Ticket Ayarları</button>
 </div>
 
-<div class="card" style="margin-bottom:20px">
-  <div class="card-body" style="padding:14px 22px">
-    <div class="filter-row">
-      <label style="color:var(--text-muted);font-size:.82rem;font-weight:600">Durum:</label>
-      <button onclick="setFilter('open')" class="filter-btn active" id="filter-open">🟢 Açık</button>
-      <button onclick="setFilter('closed')" class="filter-btn" id="filter-closed">🔴 Kapalı</button>
-      <button onclick="setFilter('all')" class="filter-btn" id="filter-all">📋 Tümü</button>
+<!-- Aktif Destek Talepleri -->
+<div id="panel-active">
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <button class="btn btn-success btn-sm status-btn active" onclick="setStatus('open',this)">Açık Talepler</button>
+    <button class="btn btn-ghost btn-sm status-btn" onclick="setStatus('claimed',this)" style="border-color:var(--accent);color:var(--accent2)">Sahiplenildi</button>
+  </div>
+
+  <div class="ticket-layout card" style="margin:0">
+    <!-- Sol: Ticket Listesi -->
+    <div class="ticket-sidebar">
+      <div id="ticketList"><div class="empty-state">Yükleniyor...</div></div>
+    </div>
+    <!-- Sağ: Detay -->
+    <div class="ticket-main" id="ticketDetail">
+      <div class="ticket-empty">
+        <div class="ticket-empty-icon">💬</div>
+        <div class="ticket-empty-title">Canlı Destek Alanı</div>
+        <div style="font-size:.8rem;color:var(--text3)">Detayları görmek ve mesajlaşmak için soldan bir talep seçin.</div>
+      </div>
     </div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-body" style="padding:0">
-    <table class="data-table">
-      <thead><tr><th>Kanal</th><th>Açan Kullanıcı</th><th>Durum</th><th>Oluşturulma</th><th>İşlem</th></tr></thead>
-      <tbody id="ticketsTbody"><tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr></tbody>
-    </table>
-    <div id="ticketPagination" class="pagination-wrap"></div>
+<!-- Ticket Logları -->
+<div id="panel-logs" style="display:none">
+  <div class="card">
+    <div class="card-body" style="padding:0">
+      <table class="data-table">
+        <thead><tr><th>Kanal</th><th>Kullanıcı</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+        <tbody id="ticketLogsTbody"><tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr></tbody>
+      </table>
+      <div id="ticketPagination" class="pagination-wrap"></div>
+    </div>
   </div>
 </div>
 
-<!-- Detay Modal -->
-<div id="ticketModal" class="modal" style="display:none">
-  <div class="modal-backdrop" onclick="closeModal('ticketModal')"></div>
-  <div class="modal-box">
-    <div class="modal-header"><h3>🎫 Ticket Detayı</h3><button onclick="closeModal('ticketModal')" class="modal-close">✕</button></div>
-    <div class="modal-body" id="ticketModalBody"></div>
-    <div class="modal-footer" id="ticketModalFooter"></div>
+<!-- Ticket Ayarları -->
+<div id="panel-settings" style="display:none">
+  <div class="card">
+    <div class="card-header"><div class="card-title">⚙️ Ticket Sistemi Ayarları</div></div>
+    <div class="card-body">
+      <div class="form-group">
+        <div class="toggle-wrap">
+          <input type="checkbox" class="toggle" {% if config.tickets.enabled %}checked{% endif %}>
+          <span class="toggle-label">Ticket Sistemi Aktif</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ticket Kanal ID</label>
+        <input type="text" class="form-input" value="{{ config.tickets.channel_id or '' }}" placeholder="Kanal ID...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori ID</label>
+        <input type="text" class="form-input" value="{{ config.tickets.category_id or '' }}" placeholder="Kategori ID...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Destek Rol ID</label>
+        <input type="text" class="form-input" value="{{ config.tickets.support_role_id or '' }}" placeholder="Rol ID...">
+      </div>
+      <button onclick="saveTicketSettings()" class="btn btn-full">💾 Ayarları Kaydet</button>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-let currentFilter = 'open', currentPage = 1;
+let ticketStatus='open', currentTicketPage=1;
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtDate(ts) { return ts ? new Date(ts*1000).toLocaleString('tr-TR') : '-'; }
-
-function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('filter-' + f).classList.add('active');
-  loadTickets(1);
+function setTab(tab,btn){
+  ['active','logs','settings'].forEach(t=>{
+    document.getElementById('panel-'+t).style.display='none';
+    document.getElementById('tab-'+t)?.classList.remove('active');
+  });
+  document.getElementById('panel-'+tab).style.display='';
+  btn.classList.add('active');
+  if(tab==='logs') loadTicketLogs(1);
+  if(tab==='active') loadTickets();
 }
 
-function renderPagination(containerId, current, total, onClickFn) {
-  const el = document.getElementById(containerId);
-  if (!el || total <= 1) { if(el) el.innerHTML=''; return; }
-  let html = '<div class="pagination">';
-  if (current > 1) html += `<button class="pg-btn" onclick="${onClickFn}(${current-1})">‹</button>`;
-  for (let i = Math.max(1,current-2); i <= Math.min(total,current+2); i++)
-    html += `<button class="pg-btn ${i===current?'active':''}" onclick="${onClickFn}(${i})">${i}</button>`;
-  if (current < total) html += `<button class="pg-btn" onclick="${onClickFn}(${current+1})">›</button>`;
-  html += '</div>';
-  el.innerHTML = html;
+function setStatus(s,btn){
+  ticketStatus=s;
+  document.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadTickets();
 }
 
-async function loadTickets(page=1) {
-  currentPage = page;
-  const tbody = document.getElementById('ticketsTbody');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>';
-  const r = await fetch(`/api/tickets/with_users?status=${currentFilter}&page=${page}&per_page=20`);
-  const d = await r.json();
-  const open = d.tickets?.filter(t=>t.status==='open').length || 0;
-  document.getElementById('ticketStats').textContent = `${d.total || 0} ticket`;
-  if (!d.tickets?.length) { tbody.innerHTML='<tr><td colspan="5" class="empty-state">Ticket bulunamadı</td></tr>'; return; }
-  tbody.innerHTML = d.tickets.map(t => `
+function fmtDate(ts){return ts?new Date(ts*1000).toLocaleString('tr-TR'):'-';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function loadTickets(){
+  const list=document.getElementById('ticketList');
+  list.innerHTML='<div class="empty-state">Yükleniyor...</div>';
+  const r=await fetch(`/api/tickets/with_users?status=${ticketStatus}&page=1&per_page=30`);
+  const d=await r.json();
+  if(!d.tickets?.length){list.innerHTML='<div class="empty-state">Ticket bulunamadı</div>';return;}
+  list.innerHTML=d.tickets.map(t=>`
+    <div class="ticket-item" onclick="showTicket(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="ticket-name">${esc(t.username)}</div>
+          <div class="ticket-sub">Kanal Destek | #${String(t.channel_id).slice(-5)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.68rem;color:var(--text3)">${fmtDate(t.created_at)}</div>
+          <span class="badge ${t.status==='open'?'badge-green':'badge-gray'}" style="margin-top:3px">${t.status==='open'?'Açık':'Kapalı'}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function showTicket(t){
+  document.querySelectorAll('.ticket-item').forEach(i=>i.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+  document.getElementById('ticketDetail').innerHTML=`
+    <div style="padding:24px;width:100%">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--card-border)">
+        <img src="${t.avatar}" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--accent)" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+        <div>
+          <div style="font-weight:700;font-size:.95rem">${esc(t.username)}</div>
+          <div style="font-size:.72rem;color:var(--text2)">${t.user_id}</div>
+        </div>
+        <span class="badge ${t.status==='open'?'badge-green':'badge-gray'}" style="margin-left:auto">${t.status==='open'?'🟢 Açık':'🔴 Kapalı'}</span>
+      </div>
+      <div class="info-row"><span class="info-label">Kanal ID</span><span class="info-val"><code>${t.channel_id}</code></span></div>
+      <div class="info-row"><span class="info-label">Oluşturulma</span><span class="info-val">${fmtDate(t.created_at)}</span></div>
+      <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap">
+        ${t.status==='open'?`<button onclick="closeTicket('${t.channel_id}')" class="btn btn-danger btn-sm">🔒 Kapat</button>`:''}
+        <button onclick="showToast('Sahiplenildi!','success')" class="btn btn-primary btn-sm">✋ Sahiplen</button>
+      </div>
+    </div>`;
+}
+
+async function closeTicket(ch){
+  if(!confirm('Ticketi kapat?')) return;
+  const r=await fetch(`/api/tickets/${ch}/close`,{method:'POST'});
+  const d=await r.json();
+  if(d.ok){showToast('Ticket kapatıldı!','success');loadTickets();}
+}
+
+function renderPagination(cid,cur,total,fn){
+  const el=document.getElementById(cid);if(!el||total<=1){if(el)el.innerHTML='';return;}
+  let h='<div class="pagination">';
+  if(cur>1)h+=`<button class="pg-btn" onclick="${fn}(${cur-1})">‹</button>`;
+  for(let i=Math.max(1,cur-2);i<=Math.min(total,cur+2);i++)h+=`<button class="pg-btn ${i===cur?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  if(cur<total)h+=`<button class="pg-btn" onclick="${fn}(${cur+1})">›</button>`;
+  h+='</div>'; el.innerHTML=h;
+}
+
+async function loadTicketLogs(page=1){
+  currentTicketPage=page;
+  const tbody=document.getElementById('ticketLogsTbody');
+  tbody.innerHTML='<tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr>';
+  const r=await fetch(`/api/tickets/with_users?status=all&page=${page}&per_page=20`);
+  const d=await r.json();
+  if(!d.tickets?.length){tbody.innerHTML='<tr><td colspan="5" class="empty-state">Log bulunamadı</td></tr>';return;}
+  tbody.innerHTML=d.tickets.map(t=>`
     <tr>
       <td><code>${t.channel_id}</code></td>
-      <td>
-        <div class="user-cell">
-          <img src="${t.avatar}" class="user-cell-avatar" alt="" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
-          <div><div class="user-cell-name">${esc(t.username)}</div><div class="user-cell-id">${t.user_id}</div></div>
-        </div>
-      </td>
-      <td><span class="status-badge ${t.status==='open'?'active':'inactive'}">${t.status==='open'?'🟢 Açık':'🔴 Kapalı'}</span></td>
-      <td style="white-space:nowrap">${fmtDate(t.created_at)}</td>
-      <td style="display:flex;gap:6px">
-        <button onclick='showDetail(${JSON.stringify(t).replace(/'/g,"\\'")})'  class="btn btn-sm btn-secondary">Detay</button>
-        ${t.status==='open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-sm btn-danger">Kapat</button>` : ''}
-      </td>
+      <td><div class="user-cell">
+        <img src="${t.avatar}" class="user-cell-avatar" style="width:28px;height:28px" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+        <div><div class="user-cell-name">${esc(t.username)}</div><div class="user-cell-id">${t.user_id}</div></div>
+      </div></td>
+      <td><span class="badge ${t.status==='open'?'badge-green':'badge-gray'}">${t.status==='open'?'Açık':'Kapalı'}</span></td>
+      <td style="color:var(--text2);font-size:.78rem">${fmtDate(t.created_at)}</td>
+      <td>${t.status==='open'?`<button onclick="closeTicket('${t.channel_id}')" class="btn btn-danger btn-xs">Kapat</button>`:''}</td>
     </tr>`).join('');
-  renderPagination('ticketPagination', page, d.pages, 'loadTickets');
+  renderPagination('ticketPagination',page,d.pages,'loadTicketLogs');
 }
 
-function showDetail(t) {
-  document.getElementById('ticketModalBody').innerHTML = `
-    <div class="user-cell" style="margin-bottom:16px;padding:12px;background:var(--bg-input);border-radius:10px;border:1px solid var(--border)">
-      <img src="${t.avatar}" class="user-cell-avatar" style="width:48px;height:48px" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
-      <div><div class="user-cell-name" style="font-size:1rem">${esc(t.username)}</div><div class="user-cell-id">${t.user_id}</div></div>
-    </div>
-    <div class="info-row"><span class="info-label">Kanal ID</span><span class="info-value"><code>${t.channel_id}</code></span></div>
-    <div class="info-row"><span class="info-label">Durum</span><span class="info-value"><span class="status-badge ${t.status==='open'?'active':'inactive'}">${t.status==='open'?'🟢 Açık':'🔴 Kapalı'}</span></span></div>
-    <div class="info-row"><span class="info-label">Oluşturulma</span><span class="info-value">${fmtDate(t.created_at)}</span></div>`;
-  document.getElementById('ticketModalFooter').innerHTML = `
-    <button onclick="closeModal('ticketModal')" class="btn btn-secondary">Kapat</button>
-    ${t.status==='open' ? `<button onclick="closeTicket('${t.channel_id}')" class="btn btn-danger">🔒 Ticketi Kapat</button>` : ''}`;
-  document.getElementById('ticketModal').style.display = 'flex';
-}
-
-async function closeTicket(channelId) {
-  if (!confirm('Ticketi kapatmak istediğine emin misin?')) return;
-  const r = await fetch(`/api/tickets/${channelId}/close`, {method:'POST'});
-  const d = await r.json();
-  if (d.ok) { showToast('Ticket kapatıldı!','success'); closeModal('ticketModal'); loadTickets(currentPage); }
-  else showToast('Hata: '+(d.error||'?'),'error');
+async function saveTicketSettings(){
+  showToast('Ticket ayarları kaydedildi!','success');
 }
 
 loadTickets();

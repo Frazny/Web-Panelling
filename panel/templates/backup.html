@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Sunucu Yedekleme — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Sunucu Yedekleme</div>
+<div class="page-subtitle">Sunucu kanallarını, rollerini, kategorileri ve izin yetkilerini yedekleyin.</div>
+
+<!-- Uyarı -->
+<div class="alert-box danger">
+  ⚠️ <strong>Kritik Güvenlik Uyarısı:</strong> Yedek geri yükleme işlemi, sunucudaki tüm mevcut kanalları, kategorileri ve rolleri silip yedeğin alındığı yapıya yayar. Bu işlem geri alınamaz! Güvenliyle bu komutu yalnızca sunucu sahibi tarafından tetiklenebilir.
+</div>
+
+<!-- Yeni Yedek Oluştur -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">💾 Sunucu Yedekleme Sistemi</div>
+    <span style="font-size:.78rem;color:var(--text2)">Sunucudaki kanalları, rolleri, tüm detayları yedekleyin ve tek tıkla geri yükleyin.</span>
+    <button onclick="createBackup()" class="btn btn-primary btn-sm">🔄 Yeni Yedek Oluştur</button>
+  </div>
+</div>
+
+<!-- Alınan Yedekler -->
+<div style="font-weight:700;font-size:.88rem;margin-bottom:12px;color:var(--text2)">📦 Alınan Yedekler</div>
+<div class="backup-grid" id="backupGrid">
+  <div class="empty-state" style="grid-column:1/-1;padding:40px">Yükleniyor...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadBackups(){
+  const r=await fetch('/api/backup/list');
+  const d=await r.json();
+  const grid=document.getElementById('backupGrid');
+  if(!d.backups?.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1;padding:40px">Henüz yedek alınmamış.</div>';return;}
+  grid.innerHTML=d.backups.map(b=>`
+    <div class="backup-card">
+      <div style="font-size:.68rem;color:var(--text3);margin-bottom:6px">${new Date(b.created_at*1000).toLocaleString('tr-TR')}</div>
+      <div class="backup-code">${b.code||'BACKUP-'+b.id}</div>
+      <div class="backup-meta">
+        <div class="backup-stat"><div class="backup-stat-val">${b.roles||0}</div><div class="backup-stat-lbl">Rol</div></div>
+        <div class="backup-stat"><div class="backup-stat-val">${b.categories||0}</div><div class="backup-stat-lbl">Kategori</div></div>
+        <div class="backup-stat"><div class="backup-stat-val">${b.channels||0}</div><div class="backup-stat-lbl">Kanal</div></div>
+      </div>
+      <div class="backup-actions">
+        <button onclick="restoreBackup('${b.id}')" class="btn btn-primary btn-sm" style="flex:1">🔄 Yükle</button>
+        <button onclick="deleteBackup('${b.id}')" class="btn btn-danger btn-sm">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function createBackup(){
+  const btn=event.currentTarget;
+  btn.disabled=true; btn.textContent='⏳ Yedek alınıyor...';
+  const r=await fetch('/api/backup/create',{method:'POST'});
+  const d=await r.json();
+  btn.disabled=false; btn.textContent='🔄 Yeni Yedek Oluştur';
+  if(d.ok){showToast('Yedek alındı!','success');loadBackups();}
+  else showToast('Hata: '+(d.error||'?'),'error');
+}
+
+async function restoreBackup(id){
+  if(!confirm('⚠️ Bu işlem geri alınamaz! Sunucu yapısı yeniden oluşturulacak. Devam etmek istiyor musun?')) return;
+  const r=await fetch(`/api/backup/${id}/restore`,{method:'POST'});
+  const d=await r.json();
+  if(d.ok) showToast('Yedek geri yüklendi!','success');
+  else showToast('Hata: '+(d.error||'?'),'error');
+}
+
+async function deleteBackup(id){
+  if(!confirm('Bu yedeği silmek istiyor musun?')) return;
+  const r=await fetch(`/api/backup/${id}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){showToast('Yedek silindi!','success');loadBackups();}
+}
+
+loadBackups();
+</script>
+{% endblock %}

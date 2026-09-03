@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Embed Builder — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Embed Builder</div>
+<div class="page-subtitle">Zengin içerikli mesajlar tasarlayın.</div>
+
+<div class="grid-2" style="align-items:start">
+  <!-- Sol: Form -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">✏️ Profesyonel Embed Tasarımcısı</div>
+        <a href="https://discord.com/developers/docs/resources/channel#embed-object" target="_blank" style="font-size:.72rem;color:var(--accent2)">REHBER 🔗</a>
+      </div>
+      <div class="card-body">
+        <!-- Discord yazım rehberi -->
+        <div style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:.75rem;color:var(--text2);line-height:1.8">
+          <code>**kalın**</code> → <strong>Kalın</strong> &nbsp; <code>*italik*</code> → <em>italik</em> &nbsp;
+          <code>`kod`</code> → <code>kod</code> &nbsp; <code>~~üstü çizili~~</code><br>
+          <code>&gt; Alıntı</code> → Alıntı Bloğu &nbsp; <code>&gt;&gt;&gt; Çok satırlı alıntı</code>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Üst Başlık (Author)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="authorName" class="form-input" placeholder="Yazar Adı" oninput="updatePreview()">
+            <input type="text" id="authorIcon" class="form-input" placeholder="İkon URL" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Başlık</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="embedTitle" class="form-input" placeholder="Embed Başlığı" oninput="updatePreview()">
+            <input type="color" id="embedColor" value="#7c6af7" onchange="updatePreview()" style="width:48px;height:40px;border:none;background:none;cursor:pointer;border-radius:8px">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Açıklama</label>
+          <textarea id="embedDesc" class="form-textarea" rows="4" placeholder="Embed açıklaması..." oninput="updatePreview()"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Görseller</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="embedImage" class="form-input" placeholder="Büyük Resim URL" oninput="updatePreview()">
+            <input type="text" id="embedThumb" class="form-input" placeholder="Küçük Resim (Thumbnail) URL" oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alt Bilgi (Footer) & Zaman</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="footerText" class="form-input" placeholder="Footer Metni" oninput="updatePreview()">
+            <input type="text" id="footerIcon" class="form-input" placeholder="Footer İkon URL" oninput="updatePreview()">
+            <label class="toggle-wrap" style="white-space:nowrap">
+              <input type="checkbox" class="toggle" id="showTimestamp" onchange="updatePreview()" checked>
+              <span class="toggle-label" style="font-size:.75rem">Zaman</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hedef Kanal</label>
+          <select id="targetChannel" class="form-select">
+            <option value="">Kanal Seçin...</option>
+            {% for ch in channels %}
+            <option value="{{ ch.id }}"># {{ ch.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button onclick="sendEmbed()" class="btn btn-full">✉️ Embed Gönderimini Sunucuya Gönder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sağ: Önizleme -->
+  <div>
+    <div class="card" style="position:sticky;top:80px">
+      <div class="card-header"><div class="card-title">👀 Discord Canlı Önizleme</div></div>
+      <div class="card-body">
+        <div class="discord-preview">
+          <div class="discord-msg-meta">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:white">B</div>
+            <span class="discord-bot-name" id="previewBotName">Bot</span>
+            <span class="discord-bot-badge">BOT</span>
+            <span class="discord-time">Bugün</span>
+          </div>
+          <div class="discord-embed" id="embedPreview" style="border-left-color:#7c6af7">
+            <div class="embed-author" id="previewAuthor" style="display:none"></div>
+            <div class="embed-title" id="previewTitle">Başlık</div>
+            <div class="embed-desc" id="previewDesc">Açıklama buraya gelecek...</div>
+            <img id="previewImage" style="display:none;max-width:100%;border-radius:4px;margin-top:10px">
+            <div id="previewFooter" style="font-size:.72rem;color:#a3a6aa;margin-top:10px;display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function updatePreview(){
+  const title=document.getElementById('embedTitle').value||'Başlık';
+  const desc=document.getElementById('embedDesc').value||'Açıklama buraya gelecek...';
+  const color=document.getElementById('embedColor').value||'#7c6af7';
+  const authorName=document.getElementById('authorName').value;
+  const footerText=document.getElementById('footerText').value;
+  const imgUrl=document.getElementById('embedImage').value;
+  const showTs=document.getElementById('showTimestamp').checked;
+
+  document.getElementById('embedPreview').style.borderLeftColor=color;
+  document.getElementById('previewTitle').innerHTML=esc(title);
+  document.getElementById('previewDesc').innerHTML=esc(desc).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>');
+
+  const authorEl=document.getElementById('previewAuthor');
+  if(authorName){authorEl.textContent=authorName;authorEl.style.display='flex';}
+  else authorEl.style.display='none';
+
+  const imgEl=document.getElementById('previewImage');
+  if(imgUrl){imgEl.src=imgUrl;imgEl.style.display='';}
+  else imgEl.style.display='none';
+
+  const footerEl=document.getElementById('previewFooter');
+  const ts=showTs?' • '+new Date().toLocaleString('tr-TR'):'';
+  if(footerText||showTs){footerEl.textContent=(footerText||'')+ts;footerEl.style.display='';}
+  else footerEl.style.display='none';
+}
+
+async function sendEmbed(){
+  const ch=document.getElementById('targetChannel').value;
+  if(!ch){showToast('Kanal seçin!','error');return;}
+  const payload={
+    channel_id:ch,
+    embed:{
+      title:document.getElementById('embedTitle').value||undefined,
+      description:document.getElementById('embedDesc').value||undefined,
+      color:parseInt(document.getElementById('embedColor').value.slice(1),16),
+      author:document.getElementById('authorName').value?{name:document.getElementById('authorName').value}:undefined,
+      footer:document.getElementById('footerText').value?{text:document.getElementById('footerText').value}:undefined,
+      timestamp:document.getElementById('showTimestamp').checked?new Date().toISOString():undefined,
+      image:document.getElementById('embedImage').value?{url:document.getElementById('embedImage').value}:undefined,
+      thumbnail:document.getElementById('embedThumb').value?{url:document.getElementById('embedThumb').value}:undefined,
+    }
+  };
+  const r=await fetch('/api/embed/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(d.ok) showToast('Embed gönderildi!','success');
+  else showToast('Hata: '+(d.error||'?'),'error');
+}
+
+updatePreview();
+</script>
+{% endblock %}

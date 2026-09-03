@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}İstatistikler — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">İstatistikler</div>
+<div class="page-subtitle">Sunucu ve koruma verilerini analiz edin.</div>
+
+<!-- Haftalık Koruma Aktivitesi -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📊 Haftalık Koruma Aktivitesi</div>
+    <button onclick="loadCharts()" class="btn btn-ghost btn-sm">🔄 Yenile</button>
+  </div>
+  <div class="card-body">
+    <canvas id="weeklyChart" height="80"></canvas>
+  </div>
+</div>
+
+<!-- Alt Stat Kartları -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:18px">
+  <div class="card" style="margin:0;cursor:pointer" onclick="showStatDetail('blocked')">
+    <div class="card-body" style="padding:16px">
+      <div style="font-size:.8rem;color:var(--text2);margin-bottom:4px">🚫 En Çok Engellenenler</div>
+      <div id="blockedList" style="color:var(--text3);font-size:.8rem">Yükleniyor...</div>
+    </div>
+  </div>
+  <div class="card" style="margin:0;cursor:pointer" onclick="showStatDetail('channels')">
+    <div class="card-body" style="padding:16px">
+      <div style="font-size:.8rem;color:var(--text2);margin-bottom:4px">💬 En Aktif Kanallar</div>
+      <div id="channelList" style="color:var(--text3);font-size:.8rem">Yükleniyor...</div>
+    </div>
+  </div>
+  <div class="card" style="margin:0;cursor:pointer" onclick="showStatDetail('voice')">
+    <div class="card-body" style="padding:16px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text2);margin-bottom:4px">
+        🔊 En Aktif Sesli Kullanıcılar
+      </div>
+      <div id="voiceList" style="color:var(--text3);font-size:.8rem">Yükleniyor...</div>
+    </div>
+  </div>
+  <div class="card" style="margin:0;cursor:pointer" onclick="showStatDetail('writers')">
+    <div class="card-body" style="padding:16px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text2);margin-bottom:4px">
+        ✍️ En Aktif Yazılı Kullanıcılar
+      </div>
+      <div id="writerList" style="color:var(--text3);font-size:.8rem">Yükleniyor...</div>
+    </div>
+  </div>
+</div>
+
+<!-- XP ve Ekonomi Grafikleri -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><div class="card-title">🏆 Top XP</div></div>
+    <div class="card-body"><canvas id="xpChart" height="180"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">💰 Top Ekonomi</div></div>
+    <div class="card-body"><canvas id="ecoChart" height="180"></canvas></div>
+  </div>
+</div>
+
+<!-- Davet Liderlik -->
+<div class="card">
+  <div class="card-header"><div class="card-title">📨 Davet Liderlik Tablosu</div></div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Kullanıcı</th><th>Davet</th></tr></thead>
+      <tbody id="inviteTbody"><tr><td colspan="3" class="empty-state">Yükleniyor...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color = 'rgba(156,163,192,0.8)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter, sans-serif';
+
+async function loadCharts() {
+  // Weekly joins
+  const jr = await fetch('/api/charts/joins');
+  const jd = await jr.json();
+  const jCtx = document.getElementById('weeklyChart').getContext('2d');
+  if (window._weeklyChart) window._weeklyChart.destroy();
+  const g = jCtx.createLinearGradient(0,0,0,200);
+  g.addColorStop(0,'rgba(124,106,247,0.4)'); g.addColorStop(1,'rgba(124,106,247,0.01)');
+  window._weeklyChart = new Chart(jCtx, {
+    type:'line',
+    data:{ labels:jd.data.map(d=>d.label), datasets:[{ label:'Katılımlar', data:jd.data.map(d=>d.count), borderColor:'#7c6af7', backgroundColor:g, borderWidth:2, pointBackgroundColor:'#7c6af7', pointRadius:3, tension:.4, fill:true }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'}}, x:{grid:{display:false}} }}
+  });
+
+  // XP
+  const xr = await fetch('/api/charts/xp');
+  const xd = await xr.json();
+  const xCtx = document.getElementById('xpChart').getContext('2d');
+  if (window._xpChart) window._xpChart.destroy();
+  window._xpChart = new Chart(xCtx, {
+    type:'bar',
+    data:{ labels:xd.data.map(d=>d.name.slice(0,12)), datasets:[{ data:xd.data.map(d=>d.xp), backgroundColor:xd.data.map((_,i)=>`rgba(124,106,247,${0.9-i*.08})`), borderRadius:6, borderSkipped:false }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'}}, x:{grid:{display:false},ticks:{maxRotation:30,font:{size:10}}} }}
+  });
+
+  // Economy
+  const er = await fetch('/api/charts/economy');
+  const ed = await er.json();
+  const eCtx = document.getElementById('ecoChart').getContext('2d');
+  if (window._ecoChart) window._ecoChart.destroy();
+  window._ecoChart = new Chart(eCtx, {
+    type:'bar',
+    data:{ labels:ed.data.map(d=>d.name.slice(0,12)), datasets:[{ data:ed.data.map(d=>d.balance), backgroundColor:ed.data.map((_,i)=>`rgba(245,158,11,${0.9-i*.08})`), borderRadius:6, borderSkipped:false }]},
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'}}, y:{grid:{display:false},ticks:{font:{size:10}}} }}
+  });
+}
+
+async function loadStats() {
+  const r = await fetch('/api/stats');
+  const d = await r.json();
+  // En aktif sesli
+  const vl = d.level_leaderboard?.slice(0,5)||[];
+  document.getElementById('voiceList').innerHTML = vl.length ? vl.map((u,i)=>`<div style="padding:3px 0">${['🥇','🥈','🥉','4.','5.'][i]} <code>${u.user_id}</code></div>`).join('') : 'Veri yok';
+  // En aktif yazılı
+  document.getElementById('writerList').innerHTML = vl.length ? vl.map((u,i)=>`<div style="padding:3px 0">${['🥇','🥈','🥉','4.','5.'][i]} XP: ${u.xp}</div>`).join('') : 'Veri yok';
+  // Engellenenler
+  document.getElementById('blockedList').innerHTML = '<div style="color:var(--text3)">Guard loglarından çekilir</div>';
+  document.getElementById('channelList').innerHTML = '<div style="color:var(--text3)">Discord API gerektirir</div>';
+  // Davet
+  const il = d.invite_leaderboard||[];
+  const tbody = document.getElementById('inviteTbody');
+  tbody.innerHTML = il.length ? il.map((r,i)=>`<tr><td><div class="rank-badge ${['rank-1','rank-2','rank-3','rank-n','rank-n','rank-n','rank-n','rank-n','rank-n','rank-n'][i]}">${i+1}</div></td><td><code>${r.inviter_id}</code></td><td><strong>${r.uses}</strong> 📨</td></tr>`).join('') : '<tr><td colspan="3" class="empty-state">Veri yok</td></tr>';
+}
+
+loadCharts(); loadStats();
+</script>
+{% endblock %}

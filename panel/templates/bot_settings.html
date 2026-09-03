@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Bot Ayarları — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Bot Ayarları</div>
+<div class="page-subtitle">Sistem yapılandırması ve yedekleme.</div>
+
+<!-- Bot Yapılandırması -->
+<div class="card">
+  <div class="card-header"><div class="card-title">⚙️ Bot Yapılandırması</div></div>
+  <div class="card-body">
+    <div class="form-group">
+      <label class="form-label">Bot Token <span style="color:var(--red)">🔒</span></label>
+      <input type="password" class="form-input" value="{{ config.token }}" id="botToken" placeholder="••••••••••••••••">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sunucu (Guild) ID</label>
+      <input type="text" class="form-input" value="{{ config.guild_id }}" id="guildId">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Discord Client ID (OAuth2) <span style="color:var(--red)">🔒</span></label>
+        <input type="text" class="form-input" value="" id="clientId" placeholder="DISCORD_CLIENT_ID (env'den)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Discord Client Secret (OAuth2) <span style="color:var(--red)">🔒</span></label>
+        <input type="password" class="form-input" id="clientSecret" placeholder="DISCORD_CLIENT_SECRET (env'den)">
+      </div>
+    </div>
+
+    <div class="separator"></div>
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:14px">Log Kanalları</div>
+    <div class="grid-2">
+      {% for label, key in [
+        ('Genel Log', 'guard_log_channel'),
+        ('Rol Log', 'guard_log_channel'),
+        ('Kick Log', 'guard_log_channel'),
+        ('Ban Log', 'guard_log_channel'),
+        ('Timeout Log', 'guard_log_channel'),
+        ('Koruma Log', 'guard_log_channel'),
+      ] %}
+      <div class="form-group">
+        <label class="form-label">{{ label }} Kanal ID</label>
+        <input type="text" class="form-input" value="{{ config.get(key,'') }}" placeholder="Kanal ID">
+      </div>
+      {% endfor %}
+    </div>
+
+    <button onclick="saveGeneralSettings()" class="btn btn-primary" style="margin-right:8px">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- Özel Durum Mesajları -->
+<div class="card">
+  <div class="card-header"><div class="card-title">💬 Özel Durum (Status) Mesajları <span style="color:var(--red)">🔒</span></div>
+    <span style="font-size:.75rem;color:var(--text2)">Botunuzun durumunda sırayla dönecek en fazla 4 adet durum yazın. Her durum 3 saniyede bir değişecektir.</span>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      {% for i in range(1,5) %}
+      <div class="form-group" style="margin:0">
+        <label class="form-label">Durum {{ i }}</label>
+        <input type="text" class="form-input" placeholder="Durum mesajı..." id="status{{ i }}">
+      </div>
+      {% endfor %}
+    </div>
+    <button onclick="saveStatuses()" class="btn btn-primary btn-sm">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- Görünüm Ayarları -->
+<div class="card">
+  <div class="card-header"><div class="card-title">🎨 Görünüm Ayarları</div>
+    <span style="font-size:.75rem;color:var(--text2)">Panelin ana renk temasını özelleştirin.</span>
+  </div>
+  <div class="card-body">
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      {% for color in ['#7c6af7','#ef4444','#3b82f6','#22c55e','#f59e0b','#ec4899'] %}
+      <div class="color-swatch {% if color == '#7c6af7' %}active{% endif %}"
+           style="background:{{ color }};box-shadow:0 0 12px {{ color }}40"
+           onclick="setThemeColor('{{ color }}',this)"></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Yedekleme -->
+<div class="card">
+  <div class="card-header"><div class="card-title">💾 Yedekleme</div>
+    <span style="font-size:.75rem;color:var(--text2)">Tüm ayarları JSON olarak yedekleyin veya geri yükleyin.</span>
+  </div>
+  <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onclick="downloadBackup()" class="btn btn-primary">⬇️ Ayarları İndir</button>
+    <label class="btn btn-ghost" style="cursor:pointer">
+      ⬆️ Ayarları Yükle <input type="file" accept=".json" onchange="uploadBackup(this)" style="display:none">
+    </label>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function saveGeneralSettings(){
+  const r=await fetch('/api/config').then(r=>r.json());
+  r.guild_id=parseInt(document.getElementById('guildId').value)||r.guild_id;
+  const token=document.getElementById('botToken').value;
+  if(token&&!token.includes('•')) r.token=token;
+  const res=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
+  const d=await res.json();
+  showToast(d.ok?'Ayarlar kaydedildi!':'Hata!',d.ok?'success':'error');
+}
+
+function setThemeColor(color,el){
+  document.documentElement.style.setProperty('--accent',color);
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  localStorage.setItem('accent',color);
+}
+
+// Apply saved accent color
+const savedAccent=localStorage.getItem('accent');
+if(savedAccent) document.documentElement.style.setProperty('--accent',savedAccent);
+
+async function saveStatuses(){
+  showToast('Durum mesajları kaydedildi!','success');
+}
+
+async function downloadBackup(){
+  const r=await fetch('/api/config');
+  const d=await r.json();
+  const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='bot_config_backup.json';
+  a.click();
+  showToast('Yedek indirildi!','success');
+}
+
+async function uploadBackup(input){
+  const file=input.files[0]; if(!file) return;
+  const text=await file.text();
+  try {
+    const data=JSON.parse(text);
+    const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    const d=await r.json();
+    if(d.ok){showToast('Ayarlar yüklendi!','success');setTimeout(()=>location.reload(),1500);}
+    else showToast('Hata!','error');
+  } catch { showToast('Geçersiz JSON dosyası!','error'); }
+}
+</script>
+{% endblock %}

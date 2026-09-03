@@ -629,6 +629,454 @@ def charts():
     return render_template("charts.html", user=request.panel_user, config=load_config())
 
 
+@app.route("/statistics")
+@owner_required
+def statistics():
+    return render_template("statistics.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/modlogs")
+@owner_required
+def modlogs():
+    return render_template("modlogs.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/message-send")
+@owner_required
+def message_send():
+    cfg = load_config()
+    channels = _get_guild_channels(cfg)
+    return render_template("message_send.html", user=request.panel_user, config=cfg, channels=channels)
+
+
+@app.route("/protection")
+@owner_required
+def protection():
+    return render_template("protection.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/server-protection")
+@owner_required
+def server_protection():
+    return render_template("server_protection.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/ai-antiraid")
+@owner_required
+def ai_antiraid():
+    return render_template("ai_antiraid.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/auto-reply")
+@owner_required
+def auto_reply():
+    return render_template("auto_reply.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/embed-builder")
+@owner_required
+def embed_builder():
+    cfg = load_config()
+    channels = _get_guild_channels(cfg)
+    return render_template("embed_builder.html", user=request.panel_user, config=cfg, channels=channels)
+
+
+@app.route("/auto-role")
+@owner_required
+def auto_role():
+    return render_template("auto_role.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/voice")
+@owner_required
+def voice():
+    return render_template("voice.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/music")
+@owner_required
+def music():
+    return render_template("music.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/giveaway")
+@owner_required
+def giveaway():
+    cfg = load_config()
+    channels = _get_guild_channels(cfg)
+    return render_template("giveaway.html", user=request.panel_user, config=cfg, channels=channels)
+
+
+@app.route("/bot-settings")
+@owner_required
+def bot_settings():
+    return render_template("bot_settings.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/backup")
+@owner_required
+def backup():
+    return render_template("backup.html", user=request.panel_user, config=load_config())
+
+
+@app.route("/account")
+@owner_required
+def account():
+    return render_template("account.html", user=request.panel_user, config=load_config())
+
+
+# ─────────────────────────────────────────────
+# Yardımcı: Discord kanallarını çek
+# ─────────────────────────────────────────────
+def _get_guild_channels(cfg):
+    guild_id = cfg.get("guild_id")
+    token = get_bot_token()
+    if not token or not guild_id:
+        return []
+    try:
+        r = requests.get(
+            f"{DISCORD_API}/guilds/{guild_id}/channels",
+            headers={"Authorization": f"Bot {token}"},
+            timeout=5,
+        )
+        if r.status_code == 200:
+            chs = [c for c in r.json() if c.get("type") in (0, 2)]  # text + voice
+            return sorted(chs, key=lambda c: c.get("position", 0))
+    except Exception:
+        pass
+    return []
+
+
+# ─────────────────────────────────────────────
+# API: Mesaj Gönder
+# ─────────────────────────────────────────────
+
+@app.route("/api/message/send", methods=["POST"])
+@owner_required
+def api_message_send():
+    data = request.get_json()
+    channel_id = data.get("channel_id")
+    content = data.get("content", "").strip()
+    if not channel_id or not content:
+        return jsonify({"error": "channel_id ve content zorunlu"}), 400
+    token = get_bot_token()
+    if not token:
+        return jsonify({"error": "Bot token bulunamadı"}), 500
+    try:
+        r = requests.post(
+            f"{DISCORD_API}/channels/{channel_id}/messages",
+            headers={"Authorization": f"Bot {token}", "Content-Type": "application/json"},
+            json={"content": content},
+            timeout=8,
+        )
+        if r.status_code in (200, 201):
+            return jsonify({"ok": True})
+        return jsonify({"error": f"Discord API: {r.status_code} {r.text}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/message/webhook", methods=["POST"])
+@owner_required
+def api_message_webhook():
+    data = request.get_json()
+    channel_id = data.get("channel_id")
+    content = data.get("content", "").strip()
+    if not channel_id or not content:
+        return jsonify({"error": "channel_id ve content zorunlu"}), 400
+    # Bot mesajı olarak gönder (webhook yoksa normal mesaj)
+    return api_message_send()
+
+
+# ─────────────────────────────────────────────
+# API: Embed Gönder
+# ─────────────────────────────────────────────
+
+@app.route("/api/embed/send", methods=["POST"])
+@owner_required
+def api_embed_send():
+    data = request.get_json()
+    channel_id = data.get("channel_id")
+    embed = data.get("embed", {})
+    if not channel_id:
+        return jsonify({"error": "channel_id zorunlu"}), 400
+    token = get_bot_token()
+    if not token:
+        return jsonify({"error": "Bot token bulunamadı"}), 500
+    try:
+        r = requests.post(
+            f"{DISCORD_API}/channels/{channel_id}/messages",
+            headers={"Authorization": f"Bot {token}", "Content-Type": "application/json"},
+            json={"embeds": [embed]},
+            timeout=8,
+        )
+        if r.status_code in (200, 201):
+            return jsonify({"ok": True})
+        return jsonify({"error": f"Discord API: {r.status_code}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# API: Oto-Cevap (Tags tablosunu kullan)
+# ─────────────────────────────────────────────
+
+@app.route("/api/auto-reply")
+@owner_required
+def api_auto_reply_list():
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    replies = []
+    try:
+        db = get_db()
+        cur = db.execute("SELECT name, content FROM tags WHERE guild_id = ? ORDER BY name", (guild_id,))
+        for r in cur.fetchall():
+            replies.append({"trigger": r[0], "reply": r[1]})
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"replies": replies})
+
+
+@app.route("/api/auto-reply", methods=["POST"])
+@owner_required
+def api_auto_reply_add():
+    data = request.get_json()
+    trigger = data.get("trigger", "").strip()
+    reply = data.get("reply", "").strip()
+    if not trigger or not reply:
+        return jsonify({"error": "trigger ve reply zorunlu"}), 400
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    mod_id = request.panel_user.get("id", 0)
+    try:
+        db = get_db()
+        db.execute(
+            "INSERT OR REPLACE INTO tags (guild_id, name, content, user_id) VALUES (?,?,?,?)",
+            (guild_id, trigger, reply, int(mod_id)),
+        )
+        db.commit()
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"ok": True})
+
+
+@app.route("/api/auto-reply/<trigger>", methods=["DELETE"])
+@owner_required
+def api_auto_reply_delete(trigger):
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    try:
+        db = get_db()
+        db.execute("DELETE FROM tags WHERE guild_id = ? AND name = ?", (guild_id, trigger))
+        db.commit()
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"ok": True})
+
+
+# ─────────────────────────────────────────────
+# API: Ses (Voice)
+# ─────────────────────────────────────────────
+
+@app.route("/api/voice/join", methods=["POST"])
+@owner_required
+def api_voice_join():
+    data = request.get_json()
+    channel_id = data.get("channel_id")
+    if not channel_id:
+        return jsonify({"error": "channel_id zorunlu"}), 400
+    # IPC flag ile bota sinyal gönder
+    try:
+        ipc_path = os.path.join(BOT_DIR, "data", "voice_cmd.json")
+        with open(ipc_path, "w") as f:
+            json.dump({"action": "join", "channel_id": int(channel_id), "ts": int(time.time())}, f)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/voice/leave", methods=["POST"])
+@owner_required
+def api_voice_leave():
+    try:
+        ipc_path = os.path.join(BOT_DIR, "data", "voice_cmd.json")
+        with open(ipc_path, "w") as f:
+            json.dump({"action": "leave", "ts": int(time.time())}, f)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# API: Çekilişler (Giveaways)
+# ─────────────────────────────────────────────
+
+@app.route("/api/giveaway/list")
+@owner_required
+def api_giveaway_list():
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    giveaways = []
+    try:
+        db = get_db()
+        cur = db.execute(
+            "SELECT id, channel_id, end_at, winners, prize, done FROM giveaways WHERE guild_id = ? ORDER BY id DESC LIMIT 50",
+            (guild_id,),
+        )
+        for r in cur.fetchall():
+            giveaways.append({"id": r[0], "channel_id": r[1], "end_at": r[2], "winners": r[3], "prize": r[4], "done": r[5]})
+        db.close()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"giveaways": giveaways})
+
+
+@app.route("/api/giveaway/create", methods=["POST"])
+@owner_required
+def api_giveaway_create():
+    data = request.get_json()
+    channel_id = data.get("channel_id")
+    prize = data.get("prize", "").strip()
+    winners = int(data.get("winners", 1))
+    duration_minutes = int(data.get("duration_minutes", 10))
+    if not channel_id or not prize:
+        return jsonify({"error": "channel_id ve prize zorunlu"}), 400
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    end_at = int(time.time()) + duration_minutes * 60
+    try:
+        db = get_db()
+        db.execute(
+            "INSERT INTO giveaways (guild_id, message_id, channel_id, end_at, winners, prize) VALUES (?,?,?,?,?,?)",
+            (guild_id, 0, int(channel_id), end_at, winners, prize),
+        )
+        db.commit()
+        db.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/giveaway/<int:gw_id>/end", methods=["POST"])
+@owner_required
+def api_giveaway_end(gw_id):
+    try:
+        db = get_db()
+        db.execute("UPDATE giveaways SET done = 1 WHERE id = ?", (gw_id,))
+        db.commit()
+        db.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/giveaway/<int:gw_id>", methods=["DELETE"])
+@owner_required
+def api_giveaway_delete(gw_id):
+    try:
+        db = get_db()
+        db.execute("DELETE FROM giveaways WHERE id = ?", (gw_id,))
+        db.commit()
+        db.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────
+# API: Yedekleme (Backup)
+# ─────────────────────────────────────────────
+
+@app.route("/api/backup/list")
+@owner_required
+def api_backup_list():
+    backup_dir = os.path.join(BOT_DIR, "data", "backups")
+    backups = []
+    if os.path.exists(backup_dir):
+        for fname in sorted(os.listdir(backup_dir), reverse=True):
+            if fname.endswith(".json"):
+                fpath = os.path.join(backup_dir, fname)
+                try:
+                    with open(fpath) as f:
+                        b = json.load(f)
+                    backups.append({
+                        "id": fname.replace(".json", ""),
+                        "code": b.get("code", fname[:12].upper()),
+                        "created_at": int(os.path.getmtime(fpath)),
+                        "roles": len(b.get("roles", [])),
+                        "categories": len([c for c in b.get("channels", []) if c.get("type") == 4]),
+                        "channels": len([c for c in b.get("channels", []) if c.get("type") != 4]),
+                    })
+                except Exception:
+                    pass
+    return jsonify({"backups": backups})
+
+
+@app.route("/api/backup/create", methods=["POST"])
+@owner_required
+def api_backup_create():
+    cfg = load_config()
+    guild_id = cfg.get("guild_id")
+    token = get_bot_token()
+    if not token:
+        return jsonify({"error": "Bot token bulunamadı"}), 500
+    try:
+        # Snapshot'tan al
+        db = get_db()
+        cur = db.execute("SELECT channel_id, data FROM channel_snapshot WHERE guild_id = ?", (guild_id,))
+        channels = [json.loads(r[1]) for r in cur.fetchall()]
+        cur = db.execute("SELECT role_id, data FROM role_snapshot WHERE guild_id = ?", (guild_id,))
+        roles = [json.loads(r[1]) for r in cur.fetchall()]
+        db.close()
+
+        import datetime, random, string
+        code = "KYZ-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        backup_data = {
+            "code": code,
+            "guild_id": guild_id,
+            "created_at": int(time.time()),
+            "channels": channels,
+            "roles": roles,
+        }
+        backup_dir = os.path.join(BOT_DIR, "data", "backups")
+        os.makedirs(backup_dir, exist_ok=True)
+        fpath = os.path.join(backup_dir, f"{code}.json")
+        with open(fpath, "w", encoding="utf-8") as f:
+            json.dump(backup_data, f, ensure_ascii=False, indent=2)
+        return jsonify({"ok": True, "code": code})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/backup/<backup_id>/restore", methods=["POST"])
+@owner_required
+def api_backup_restore(backup_id):
+    # Restore işlemi bot tarafında yapılmalı, sadece flag bırak
+    try:
+        flag_path = os.path.join(BOT_DIR, "data", "restore_flag.json")
+        with open(flag_path, "w") as f:
+            json.dump({"backup_id": backup_id, "ts": int(time.time())}, f)
+        return jsonify({"ok": True, "message": "Geri yükleme isteği gönderildi."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/backup/<backup_id>", methods=["DELETE"])
+@owner_required
+def api_backup_delete(backup_id):
+    backup_dir = os.path.join(BOT_DIR, "data", "backups")
+    fpath = os.path.join(backup_dir, f"{backup_id}.json")
+    try:
+        if os.path.exists(fpath):
+            os.remove(fpath)
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/restart", methods=["POST"])
 @owner_required
 def api_restart():

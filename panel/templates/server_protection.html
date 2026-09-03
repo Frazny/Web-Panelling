@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Sunucu Koruma — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Korumalar</div>
+<div class="page-subtitle">Sunucu güvenlik modüllerini yönetin.</div>
+
+<!-- Gelişmiş Sunucu Koruması Banner -->
+<div class="card" style="border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.03)">
+  <div class="card-header" style="border-bottom-color:rgba(239,68,68,.15)">
+    <div class="card-title" style="color:var(--red)">🔰 Gelişmiş Sunucu Koruması</div>
+    <span style="font-size:.78rem;color:var(--text2)">Sunucunuzu yetkisiz yöneticilere, botlara ve izinsiz botlara karşı maksimum seviyede koruyun.</span>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+      {% for key,label,desc in [
+        ('anti_bot','Anti-Bot','İzinsiz bot eklemeleri ve aksiyon aldıklarını geri alır.'),
+        ('anti_role','Anti-Role','İzinsiz rol elementi veya aksiyon almayı geri alır.'),
+        ('anti_channel','Anti-Channel','İzinsiz kanal elementi veya aksiyon almayı geri alır.'),
+        ('anti_ban','Anti-Ban','İzinsiz yapılan sunucu ban işlemlerinin önüne geçer.'),
+        ('anti_kick','Anti-Kick','İzinsiz yapılan kick işlemlerini otomatik engeller.'),
+      ] %}
+      <div class="module-card" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="font-size:.85rem;font-weight:700">{{ label }}</div>
+          <label class="toggle-wrap">
+            <input type="checkbox" class="toggle" {% if config.anti_nuke.enabled %}checked{% endif %} onchange="saveAntiNuke('{{ key }}',this.checked)">
+          </label>
+        </div>
+        <div class="module-desc">{{ desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Güvenlik Ayarları -->
+<div class="card">
+  <div class="card-header"><div class="card-title">⚙️ Güvenlik Ayarları</div></div>
+  <div class="card-body">
+    <div class="form-group">
+      <label class="form-label">Güvenli Roller (Whitelist)</label>
+      <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px">Bu rollere sahip kişiler korumalara takılmaz.</div>
+      <select class="form-select"><option value="">Rolleri Seçin...</option></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Cezalı Rolü</label>
+      <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px">Koruma kurallarını ihlal edenlerin tüm rolleri silinip bu rol verilecektir.</div>
+      <select class="form-select"><option value="">Bir rol seçin...</option></select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Sunucu Koruma Log Kanalı</label>
+      <select class="form-select">
+        <option value="">Kanal Seçin...</option>
+        <option value="{{ config.guard_log_channel }}" selected>{{ config.guard_log_channel }}</option>
+      </select>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="form-group">
+      <label class="form-label">Anti-Nuke Eşiği</label>
+      <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px">Kaç saniye içinde kaç işlem yapılırsa saldırı sayılır.</div>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1">
+          <label class="form-label">Eşik (İşlem)</label>
+          <input type="number" class="form-input" value="{{ config.anti_nuke.threshold }}">
+        </div>
+        <div style="flex:1">
+          <label class="form-label">Pencere (Saniye)</label>
+          <input type="number" class="form-input" value="{{ config.anti_nuke.window_seconds }}">
+        </div>
+      </div>
+    </div>
+
+    <button onclick="saveSettings()" class="btn btn-full">💾 Güvenlik Ayarlarını Kaydet</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function saveAntiNuke(key,val){
+  showToast(`${key}: ${val?'aktif':'pasif'}`, 'success');
+}
+async function saveSettings(){
+  const r=await fetch('/api/config/section',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({section:'anti_nuke',values:{enabled:true}})});
+  const d=await r.json();
+  showToast(d.ok?'Güvenlik ayarları kaydedildi!':'Hata!',d.ok?'success':'error');
+}
+</script>
+{% endblock %}

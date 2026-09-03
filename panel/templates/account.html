@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Hesap Detayları — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Hesap Detayları</div>
+<div class="page-subtitle">Discord profil bilgileriniz ve sunucu durumunuz.</div>
+
+<div style="max-width:480px;margin:0 auto">
+  <div class="profile-card">
+    <div class="profile-banner"></div>
+    <div class="profile-body">
+      <div class="profile-avatar-wrap">
+        {% if user.avatar %}
+        <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=128" class="profile-avatar" alt="">
+        {% else %}
+        <div class="profile-avatar" style="background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:white">{{ user.username[0] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="profile-name">{{ user.global_name or user.username }}</div>
+      <div class="profile-tag">@{{ user.username }}</div>
+      <div class="profile-nitro">💎 Premium</div>
+
+      <div class="profile-grid">
+        <div>
+          <div class="profile-field-label">👤 Kullanıcı ID</div>
+          <div class="profile-field-val" style="font-family:'Consolas',monospace;font-size:.8rem">{{ user.id }}</div>
+        </div>
+        <div>
+          <div class="profile-field-label">📅 Hesap Oluşturma</div>
+          <div class="profile-field-val" id="accountCreated">—</div>
+        </div>
+        <div>
+          <div class="profile-field-label">🔗 Sunucuya Katılım</div>
+          <div class="profile-field-val" id="serverJoined">—</div>
+        </div>
+        <div>
+          <div class="profile-field-label">💎 Nitro Durumu</div>
+          <div class="profile-field-val">
+            <span class="badge badge-purple">💎 Aktif</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="profile-field-label" style="margin-bottom:8px">Sunucu Rolleri</div>
+        <div id="userRoles" style="display:flex;gap:6px;flex-wrap:wrap">
+          {% for uid in config.get('kurucu_users', []) %}
+          {% if uid | string == user.id %}
+          <span class="badge badge-purple">👑 Kurucu</span>
+          {% endif %}
+          {% endfor %}
+          {% if config.owner_id | string == user.id %}
+          <span class="badge badge-purple">👑 Sahip</span>
+          {% endif %}
+          <span class="badge badge-gray">Panel Yöneticisi</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:10px">
+    <a href="/logout" class="btn btn-ghost" style="flex:1;justify-content:center;border-color:var(--red);color:var(--red)">🚪 Çıkış Yap</a>
+    <button onclick="window.location='/dashboard'" class="btn btn-primary" style="flex:1">📊 Dashboard</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Discord Snowflake'ten kayıt tarihi hesapla
+function snowflakeToDate(id){
+  const ts=Number(BigInt(id)>>22n)+1420070400000;
+  return new Date(ts).toLocaleDateString('tr-TR');
+}
+try {
+  document.getElementById('accountCreated').textContent=snowflakeToDate('{{ user.id }}');
+} catch {}
+document.getElementById('serverJoined').textContent=new Date().toLocaleDateString('tr-TR');
+</script>
+{% endblock %}

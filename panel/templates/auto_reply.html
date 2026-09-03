@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Oto-Cevaplar — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Oto-Cevaplar</div>
+<div class="page-subtitle">Otomatik yanıt kurallarını yönetin.</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">💬 Otomatik Cevaplayıcı
+      <span id="replyCount" class="badge badge-gray" style="font-size:.7rem">0 / sınırsız</span>
+    </div>
+    <button onclick="openAddModal()" class="btn btn-primary btn-sm">➕ Yeni Ekle</button>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Tetikleyici</th><th>Cevap</th><th>İşlem</th></tr></thead>
+      <tbody id="replyTbody"><tr><td colspan="3" class="empty-state">Yükleniyor...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Ekle Modal -->
+<div id="addReplyModal" class="modal" style="display:none">
+  <div class="modal-backdrop" onclick="closeModal('addReplyModal')"></div>
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">➕ Yeni Oto-Cevap</span><button onclick="closeModal('addReplyModal')" class="modal-close">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Tetikleyici Kelime</label>
+        <input type="text" id="triggerInput" class="form-input" placeholder="Örn: merhaba, ip, site...">
+        <div class="form-hint">Kullanıcı bu kelimeyi yazarsa bot otomatik cevap verir.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bot Cevabı</label>
+        <textarea id="replyInput" class="form-textarea" rows="4" placeholder="Otomatik yanıt metni..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeModal('addReplyModal')" class="btn btn-ghost">İptal</button>
+      <button onclick="addReply()" class="btn btn-primary">➕ Ekle</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function loadReplies(){
+  const r=await fetch('/api/auto-reply');
+  const d=await r.json();
+  const list=d.replies||[];
+  document.getElementById('replyCount').textContent=`${list.length} / sınırsız`;
+  const tbody=document.getElementById('replyTbody');
+  tbody.innerHTML=list.length?list.map(item=>`
+    <tr>
+      <td><strong>${esc(item.trigger)}</strong></td>
+      <td style="color:var(--text2);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.reply)}</td>
+      <td><button onclick="deleteReply('${esc(item.trigger)}')" class="btn btn-danger btn-xs">🗑️</button></td>
+    </tr>`).join(''):'<tr><td colspan="3" class="empty-state">Oto-cevap kuralı yok. Yeni ekleyin.</td></tr>';
+}
+
+function openAddModal(){
+  document.getElementById('triggerInput').value='';
+  document.getElementById('replyInput').value='';
+  document.getElementById('addReplyModal').style.display='flex';
+}
+
+async function addReply(){
+  const trigger=document.getElementById('triggerInput').value.trim();
+  const reply=document.getElementById('replyInput').value.trim();
+  if(!trigger||!reply){showToast('Tetikleyici ve cevap zorunlu!','error');return;}
+  const r=await fetch('/api/auto-reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger,reply})});
+  const d=await r.json();
+  if(d.ok){showToast('Oto-cevap eklendi!','success');closeModal('addReplyModal');loadReplies();}
+  else showToast('Hata: '+(d.error||'?'),'error');
+}
+
+async function deleteReply(trigger){
+  if(!confirm(`"${trigger}" tetikleyicisini silmek istiyor musun?`)) return;
+  const r=await fetch('/api/auto-reply/'+encodeURIComponent(trigger),{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){showToast('Silindi!','success');loadReplies();}
+}
+
+loadReplies();
+</script>
+{% endblock %}

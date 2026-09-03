@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Çekilişler — Bot Panel{% endblock %}
+{% block content %}
+<div class="page-title">Çekilişler</div>
+<div class="page-subtitle">Sunucu çekilişlerini yönetin ve oluşturun.</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">🎁 Çekiliş Sistemi</div>
+    <span style="font-size:.78rem;color:var(--text2)">Sunucunuz için web entegrasyonlu, canlı sayaçlı çekilişler düzenleyin ve yönetin.</span>
+  </div>
+  <div class="card-body">
+    <div style="font-weight:700;font-size:.88rem;margin-bottom:14px;color:var(--accent2)">🎉 Yeni Çekiliş Oluştur</div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Çekiliş Kanalı</label>
+        <select id="gwChannel" class="form-select">
+          <option value="">Kanal Seçin...</option>
+          {% for ch in channels %}
+          <option value="{{ ch.id }}"># {{ ch.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Çekiliş Ödülü</label>
+        <input type="text" id="gwPrize" class="form-input" placeholder="Ör: 100 TL Amazon Kodu...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kazanan Sayısı</label>
+        <input type="number" id="gwWinners" class="form-input" value="1" min="1" max="20">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Çekiliş Süresi (Dakika)</label>
+        <input type="number" id="gwDuration" class="form-input" value="10" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Açıklama (İsteğe Bağlı)</label>
+      <textarea id="gwDesc" class="form-textarea" rows="3" placeholder="Çekiliş şartları ve detaylar..."></textarea>
+    </div>
+    <button onclick="createGiveaway()" class="btn btn-primary">🎉 Çekilişi Başlat</button>
+  </div>
+</div>
+
+<!-- Mevcut Çekilişler -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">🎁 Mevcut Çekilişler</div>
+    <button onclick="loadGiveaways()" class="btn btn-ghost btn-sm">🔄 Yenile</button>
+  </div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead>
+        <tr><th>Ödül</th><th>Kanal</th><th>Katılımcı</th><th>Kazanan</th><th>Bitiş Süresi</th><th>Durum</th><th>İşlemler</th></tr>
+      </thead>
+      <tbody id="giveawayTbody">
+        <tr><td colspan="7" class="empty-state">Henüz hiç çekiliş oluşturulmamış.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fmtDate(ts){return ts?new Date(ts*1000).toLocaleString('tr-TR'):'-';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function createGiveaway(){
+  const channel_id=document.getElementById('gwChannel').value;
+  const prize=document.getElementById('gwPrize').value.trim();
+  const winners=parseInt(document.getElementById('gwWinners').value)||1;
+  const duration=parseInt(document.getElementById('gwDuration').value)||10;
+  if(!channel_id||!prize){showToast('Kanal ve ödül zorunlu!','error');return;}
+  const r=await fetch('/api/giveaway/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({channel_id,prize,winners,duration_minutes:duration})});
+  const d=await r.json();
+  if(d.ok){showToast('Çekiliş başlatıldı!','success');loadGiveaways();}
+  else showToast('Hata: '+(d.error||'?'),'error');
+}
+
+async function loadGiveaways(){
+  const r=await fetch('/api/giveaway/list');
+  const d=await r.json();
+  const tbody=document.getElementById('giveawayTbody');
+  if(!d.giveaways?.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Henüz hiç çekiliş oluşturulmamış.</td></tr>';return;}
+  tbody.innerHTML=d.giveaways.map(g=>`
+    <tr>
+      <td><strong>${esc(g.prize)}</strong></td>
+      <td><code>${g.channel_id}</code></td>
+      <td>—</td>
+      <td>${g.winners}</td>
+      <td>${fmtDate(g.end_at)}</td>
+      <td><span class="badge ${g.done?'badge-gray':'badge-green'}">${g.done?'Bitti':'Aktif'}</span></td>
+      <td style="display:flex;gap:5px">
+        ${!g.done?`<button onclick="endGiveaway(${g.id})" class="btn btn-danger btn-xs">Bitir</button>`:''}
+        <button onclick="deleteGiveaway(${g.id})" class="btn btn-ghost btn-xs">Sil</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function endGiveaway(id){
+  if(!confirm('Çekilişi bitirmek istiyor musun?')) return;
+  const r=await fetch(`/api/giveaway/${id}/end`,{method:'POST'});
+  const d=await r.json();
+  if(d.ok){showToast('Çekiliş bitirildi!','success');loadGiveaways();}
+}
+
+async function deleteGiveaway(id){
+  if(!confirm('Çekilişi silmek istiyor musun?')) return;
+  const r=await fetch(`/api/giveaway/${id}`,{method:'DELETE'});
+  const d=await r.json();
+  if(d.ok){showToast('Silindi!','success');loadGiveaways();}
+}
+
+loadGiveaways();
+</script>
+{% endblock %}
