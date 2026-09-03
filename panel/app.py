@@ -100,8 +100,7 @@ def index():
 
 @app.route("/login")
 def login():
-    state = secrets.token_urlsafe(32)
-    session["oauth_state"] = state
+    state = secrets.token_urlsafe(16)
     url = (
         f"https://discord.com/api/oauth2/authorize"
         f"?client_id={DISCORD_CLIENT_ID}"
@@ -116,11 +115,7 @@ def login():
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    state = request.args.get("state")
-
-    # State kontrolü: session yoksa veya uyuşmuyorsa devam et (http ortamında cookie sorunu olabilir)
-    stored_state = session.pop("oauth_state", None)
-    if stored_state and state != stored_state:
+    if not code:
         return redirect(url_for("login"))
 
     data = {
