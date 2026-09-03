@@ -1,82 +1,80 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Bot Panel{% endblock %}
+{% block title %}Dashboard — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>📊 Dashboard</h1>
-  <button onclick="restartBot()" class="btn btn-warning">🔄 Botu Yeniden Başlat</button>
+  <div class="header-actions">
+    <button onclick="restartBot()" class="btn btn-warning btn-sm" id="restartBtn">
+      🔄 Yeniden Başlat
+    </button>
+  </div>
 </div>
 
+<!-- Stat Cards -->
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-icon">👥</div>
     <div class="stat-info">
-      <div class="stat-value" id="stat-members">{{ stats.total_members }}</div>
-      <div class="stat-label">Üye (Level Sistemi)</div>
+      <div class="stat-value" id="stat-members" data-target="{{ stats.total_members }}">0</div>
+      <div class="stat-label">Kayıtlı Üye</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon">🎫</div>
     <div class="stat-info">
-      <div class="stat-value" id="stat-tickets">{{ stats.open_tickets }}</div>
+      <div class="stat-value" id="stat-tickets" data-target="{{ stats.open_tickets }}">0</div>
       <div class="stat-label">Açık Ticket</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon">⚠️</div>
     <div class="stat-info">
-      <div class="stat-value" id="stat-warns">{{ stats.total_warns }}</div>
-      <div class="stat-label">Toplam Uyarı</div>
+      <div class="stat-value" id="stat-warns" data-target="{{ stats.total_warns }}">0</div>
+      <div class="stat-label">Toplam Warn</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon">💰</div>
     <div class="stat-info">
-      <div class="stat-value" id="stat-balance">{{ stats.total_balance }}</div>
+      <div class="stat-value" id="stat-balance" data-target="{{ stats.total_balance }}">0</div>
       <div class="stat-label">Toplam Bakiye</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-icon">🏷️</div>
     <div class="stat-info">
-      <div class="stat-value" id="stat-tags">{{ stats.total_tags }}</div>
+      <div class="stat-value" id="stat-tags" data-target="{{ stats.total_tags }}">0</div>
       <div class="stat-label">Tag Sayısı</div>
     </div>
   </div>
 </div>
 
+<!-- Info + Sistem Durumu -->
 <div class="grid-2">
   <div class="card">
-    <div class="card-header">
-      <h2>🎯 Bot Bilgileri</h2>
-    </div>
+    <div class="card-header"><h2>🎯 Bot Bilgileri</h2></div>
     <div class="card-body">
       <div class="info-row">
-        <span class="info-label">Bot Adı</span>
-        <span class="info-value">{{ config.prefix }} bot</span>
-      </div>
-      <div class="info-row">
         <span class="info-label">Prefix</span>
-        <span class="info-value">{{ config.prefix }}</span>
+        <span class="info-value"><code>{{ config.prefix }}</code></span>
       </div>
       <div class="info-row">
         <span class="info-label">Guild ID</span>
-        <span class="info-value">{{ config.guild_id }}</span>
+        <span class="info-value"><code>{{ config.guild_id }}</code></span>
       </div>
       <div class="info-row">
         <span class="info-label">Bot ID</span>
-        <span class="info-value">{{ config.bot_user_id }}</span>
+        <span class="info-value"><code>{{ config.bot_user_id }}</code></span>
       </div>
       <div class="info-row">
         <span class="info-label">Sahip</span>
-        <span class="info-value">{{ config.owner_id }}</span>
+        <span class="info-value"><code>{{ config.owner_id }}</code></span>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-header">
-      <h2>🛡️ Sistem Durumu</h2>
-    </div>
+    <div class="card-header"><h2>🛡️ Sistem Durumu</h2></div>
     <div class="card-body">
       <div class="info-row">
         <span class="info-label">Anti-Nuke</span>
@@ -130,22 +128,21 @@
   </div>
 </div>
 
+<!-- Hızlı Erişim -->
 <div class="card">
-  <div class="card-header">
-    <h2>🔗 Hızlı Erişim</h2>
-  </div>
+  <div class="card-header"><h2>🔗 Hızlı Erişim</h2></div>
   <div class="card-body">
     <div class="quick-links">
-      <a href="/settings?section=general" class="quick-link">⚙️ Genel Ayarlar</a>
-      <a href="/settings?section=welcome" class="quick-link">👋 Hoşgeldin</a>
+      <a href="/settings?section=general"    class="quick-link">⚙️ Genel Ayarlar</a>
+      <a href="/settings?section=welcome"    class="quick-link">👋 Hoşgeldin</a>
       <a href="/settings?section=moderation" class="quick-link">🛡️ Moderasyon</a>
-      <a href="/settings?section=levels" class="quick-link">🏆 Seviyeler</a>
-      <a href="/settings?section=economy" class="quick-link">💰 Ekonomi</a>
-      <a href="/settings?section=tickets" class="quick-link">🎫 Ticketler</a>
-      <a href="/settings?section=automod" class="quick-link">🤖 Otomod</a>
-      <a href="/settings?section=ai" class="quick-link">🧠 AI Chat</a>
-      <a href="/settings?section=guard" class="quick-link">🛡️ Guard</a>
-      <a href="/settings?section=taglog" class="quick-link">🏷️ Tag Log</a>
+      <a href="/settings?section=levels"     class="quick-link">🏆 Seviyeler</a>
+      <a href="/settings?section=economy"    class="quick-link">💰 Ekonomi</a>
+      <a href="/settings?section=tickets"    class="quick-link">🎫 Ticketler</a>
+      <a href="/settings?section=automod"    class="quick-link">🤖 Otomod</a>
+      <a href="/settings?section=ai"         class="quick-link">🧠 AI Chat</a>
+      <a href="/settings?section=guard"      class="quick-link">🛡️ Guard</a>
+      <a href="/settings?section=taglog"     class="quick-link">🏷️ Tag Log</a>
     </div>
   </div>
 </div>
@@ -153,14 +150,61 @@
 
 {% block scripts %}
 <script>
-function restartBot() {
-  if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
-  fetch('/api/restart', { method: 'POST' })
-    .then(r => r.json())
-    .then(d => {
-      if (d.ok) alert('Yeniden başlatma isteği gönderildi!');
-      else alert('Hata: ' + d.error);
-    });
+// ── Sayaç animasyonu
+function animateCounter(el, target, duration = 1200) {
+  const start = performance.now();
+  const startVal = 0;
+  function step(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 4);
+    el.textContent = Math.floor(startVal + (target - startVal) * ease).toLocaleString('tr-TR');
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = target.toLocaleString('tr-TR');
+  }
+  requestAnimationFrame(step);
 }
+
+// Sayfa yüklenince kartları animasyonla göster
+window.addEventListener('load', () => {
+  document.querySelectorAll('.stat-value[data-target]').forEach((el, i) => {
+    const target = parseInt(el.dataset.target) || 0;
+    setTimeout(() => animateCounter(el, target), 300 + i * 80);
+  });
+});
+
+// Restart
+async function restartBot() {
+  const btn = document.getElementById('restartBtn');
+  if (!confirm('Botu yeniden başlatmak istediğine emin misin?')) return;
+  btn.disabled = true;
+  btn.textContent = '⏳ Gönderiliyor...';
+  const r = await fetch('/api/restart', { method: 'POST' });
+  const d = await r.json();
+  btn.disabled = false;
+  btn.textContent = '🔄 Yeniden Başlat';
+  if (d.ok) showToast('Yeniden başlatma isteği gönderildi!', 'success');
+  else showToast('Hata: ' + d.error, 'error');
+}
+
+// Auto refresh stats
+setInterval(async () => {
+  const r = await fetch('/api/stats').catch(() => null);
+  if (!r) return;
+  const d = await r.json();
+  const map = {
+    'stat-members': d.total_members,
+    'stat-tickets': d.open_tickets,
+    'stat-warns':   d.total_warns,
+    'stat-balance': d.total_balance,
+    'stat-tags':    d.total_tags,
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined) {
+      const prev = parseInt(el.textContent.replace(/\D/g,'')) || 0;
+      if (prev !== val) animateCounter(el, val, 600);
+    }
+  });
+}, 30000);
 </script>
 {% endblock %}

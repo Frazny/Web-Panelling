@@ -1,33 +1,56 @@
 {% extends "base.html" %}
-{% block title %}Ekonomi - Bot Panel{% endblock %}
+{% block title %}Ekonomi — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>💰 Ekonomi Liderlik Tablosu</h1>
+  <span class="stat-badge">{{ leaderboard|length }} üye</span>
 </div>
 
 <div class="card">
-  <div class="card-body">
+  <div class="card-body" style="padding:0">
     <table class="data-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="width:60px">#</th>
           <th>Kullanıcı ID</th>
           <th>Bakiye</th>
+          <th>Pay</th>
         </tr>
       </thead>
       <tbody>
-        {% for member in leaderboard %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td><code>{{ member.user_id }}</code></td>
-          <td>{{ member.balance }} 💰</td>
+        {% for m in leaderboard %}
+        {% set max_bal = leaderboard[0].balance if leaderboard else 1 %}
+        {% set pct = ((m.balance / max_bal) * 100)|int if max_bal > 0 else 0 %}
+        <tr style="animation-delay:{{ loop.index0 * 0.03 }}s">
+          <td>
+            <div class="rank-badge {{ 'rank-1' if loop.index == 1 else 'rank-2' if loop.index == 2 else 'rank-3' if loop.index == 3 else 'rank-n' }}">
+              {{ loop.index }}
+            </div>
+          </td>
+          <td><code>{{ m.user_id }}</code></td>
+          <td><strong>{{ m.balance | int }}</strong> 💵</td>
+          <td style="min-width:140px">
+            <div class="xp-bar-wrap">
+              <div class="xp-bar" style="width:0;background:linear-gradient(90deg,#f59e0b,#d97706)" data-width="{{ pct }}%"></div>
+            </div>
+          </td>
         </tr>
         {% endfor %}
         {% if not leaderboard %}
-        <tr><td colspan="3" class="empty-state">Veri bulunamadı</td></tr>
+        <tr><td colspan="4" class="empty-state">Henüz veri yok</td></tr>
         {% endif %}
       </tbody>
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.addEventListener('load', () => {
+  document.querySelectorAll('.xp-bar').forEach((bar, i) => {
+    setTimeout(() => { bar.style.width = bar.dataset.width; }, 400 + i * 40);
+  });
+});
+</script>
 {% endblock %}

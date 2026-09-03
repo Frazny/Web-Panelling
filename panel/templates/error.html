@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Hata - Bot Panel{% endblock %}
+{% block title %}Hata — Bot Panel{% endblock %}
 {% block content %}
 <div class="error-container">
-  <div class="error-icon">🚫</div>
-  <h1>Erişim Engellendi</h1>
+  <div class="error-icon">⛔</div>
+  <h1>Erişim Reddedildi</h1>
   <p>{{ message }}</p>
-  <a href="/" class="btn btn-primary">↩ Ana Sayfa</a>
+  <a href="/dashboard" class="btn btn-primary">← Dashboard'a Dön</a>
 </div>
 {% endblock %}

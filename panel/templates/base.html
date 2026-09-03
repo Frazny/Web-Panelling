@@ -5,15 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Bot Panel{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Page transition overlay */
+    #page-loader {
+      position: fixed; inset: 0; z-index: 9998;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity .35s ease, visibility .35s ease;
+    }
+    #page-loader.hidden { opacity: 0; visibility: hidden; }
+
+    .loader-ring {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(108,99,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sidebar tooltip on hover */
+    .nav-link .nav-badge {
+      margin-left: auto;
+      background: var(--danger);
+      color: white;
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 99px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    /* Active page indicator line at top */
+    .top-bar {
+      position: fixed; top: 0; left: var(--sidebar-width); right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+      z-index: 99;
+      animation: slideRight .5s ease;
+    }
+    @keyframes slideRight { from { width: 0; } to { width: 100%; } }
+  </style>
 </head>
 <body>
+  <!-- Page loader -->
+  <div id="page-loader"><div class="loader-ring"></div></div>
+  <div class="top-bar"></div>
+
   <nav class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-icon">🤖</div>
       <span>Bot Panel</span>
     </div>
+
     <div class="nav-links">
       <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
         <span class="nav-icon">📊</span> Dashboard
@@ -22,7 +68,7 @@
         <span class="nav-icon">⚙️</span> Ayarlar
       </a>
 
-      <div class="nav-section-label">MODERASYOn</div>
+      <div class="nav-section-label">Moderasyon</div>
 
       <a href="/moderation" class="nav-link {% if request.path == '/moderation' %}active{% endif %}">
         <span class="nav-icon">🛡️</span> Moderasyon
@@ -34,7 +80,7 @@
         <span class="nav-icon">👥</span> Üyeler
       </a>
 
-      <div class="nav-section-label">İSTATİSTİK</div>
+      <div class="nav-section-label">İstatistik</div>
 
       <a href="/levels" class="nav-link {% if request.path == '/levels' %}active{% endif %}">
         <span class="nav-icon">🏆</span> Seviyeler
@@ -43,7 +89,7 @@
         <span class="nav-icon">💰</span> Ekonomi
       </a>
 
-      <div class="nav-section-label">SİSTEM</div>
+      <div class="nav-section-label">Sistem</div>
 
       <a href="/cogs" class="nav-link {% if request.path == '/cogs' %}active{% endif %}">
         <span class="nav-icon">🧩</span> Cog Yönetimi
@@ -52,6 +98,7 @@
         <span class="nav-icon">📋</span> Loglar
       </a>
     </div>
+
     <div class="sidebar-footer">
       <div class="user-info">
         {% if user.avatar %}
@@ -61,7 +108,9 @@
         {% endif %}
         <span class="username">{{ user.username }}</span>
       </div>
-      <a href="/logout" class="nav-link logout">🚪 Çıkış</a>
+      <a href="/logout" class="nav-link logout">
+        <span class="nav-icon">🚪</span> Çıkış Yap
+      </a>
     </div>
   </nav>
 
@@ -69,7 +118,30 @@
     {% block content %}{% endblock %}
   </main>
 
+  <div id="toastContainer"></div>
+
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   {% block scripts %}{% endblock %}
+
+  <script>
+    // Hide page loader
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('page-loader').classList.add('hidden');
+      }, 200);
+    });
+
+    // Page transition on nav click
+    document.querySelectorAll('.nav-link:not(.logout)').forEach(link => {
+      link.addEventListener('click', e => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#')) return;
+        e.preventDefault();
+        const loader = document.getElementById('page-loader');
+        loader.classList.remove('hidden');
+        setTimeout(() => window.location.href = href, 250);
+      });
+    });
+  </script>
 </body>
 </html>

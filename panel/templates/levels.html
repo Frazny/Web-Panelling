@@ -1,37 +1,63 @@
 {% extends "base.html" %}
-{% block title %}Seviyeler - Bot Panel{% endblock %}
+{% block title %}Seviyeler — Bot Panel{% endblock %}
 {% block content %}
 <div class="page-header">
   <h1>🏆 Seviye Liderlik Tablosu</h1>
+  <span class="stat-badge">{{ leaderboard|length }} üye</span>
 </div>
 
 <div class="card">
-  <div class="card-body">
+  <div class="card-body" style="padding:0">
     <table class="data-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="width:60px">#</th>
           <th>Kullanıcı ID</th>
           <th>XP</th>
+          <th>İlerleme</th>
           <th>Mesaj</th>
-          <th>Ses (dk)</th>
+          <th>Ses</th>
         </tr>
       </thead>
       <tbody>
-        {% for member in leaderboard %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td><code>{{ member.user_id }}</code></td>
-          <td>{{ member.xp }}</td>
-          <td>{{ member.messages }}</td>
-          <td>{{ (member.voice_seconds // 60) }}</td>
+        {% for m in leaderboard %}
+        {% set max_xp = leaderboard[0].xp if leaderboard else 1 %}
+        {% set pct = ((m.xp / max_xp) * 100)|int if max_xp > 0 else 0 %}
+        <tr style="animation-delay:{{ loop.index0 * 0.03 }}s">
+          <td>
+            <div class="rank-badge {{ 'rank-1' if loop.index == 1 else 'rank-2' if loop.index == 2 else 'rank-3' if loop.index == 3 else 'rank-n' }}">
+              {{ loop.index }}
+            </div>
+          </td>
+          <td><code>{{ m.user_id }}</code></td>
+          <td><strong>{{ m.xp | int }}</strong></td>
+          <td style="min-width:120px">
+            <div class="xp-bar-wrap">
+              <div class="xp-bar" style="width:0" data-width="{{ pct }}%"></div>
+            </div>
+          </td>
+          <td>{{ m.messages or 0 }}</td>
+          <td>{{ (m.voice_seconds // 60) if m.voice_seconds else 0 }} dk</td>
         </tr>
         {% endfor %}
         {% if not leaderboard %}
-        <tr><td colspan="5" class="empty-state">Veri bulunamadı</td></tr>
+        <tr><td colspan="6" class="empty-state">Henüz veri yok</td></tr>
         {% endif %}
       </tbody>
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// XP bar animasyonu
+window.addEventListener('load', () => {
+  document.querySelectorAll('.xp-bar').forEach((bar, i) => {
+    setTimeout(() => {
+      bar.style.width = bar.dataset.width;
+    }, 400 + i * 40);
+  });
+});
+</script>
 {% endblock %}
