@@ -37,7 +37,8 @@ app = Flask(
     template_folder=os.path.join(_BASE_DIR, "templates"),
     static_folder=os.path.join(_BASE_DIR, "static"),
 )
-app.secret_key = secrets.token_hex(32)
+# SECRET_KEY env'den okunur; yoksa sabit bir fallback kullanılır (production'da env'den set et)
+app.secret_key = os.environ.get("SECRET_KEY", "frazny-panel-secret-do-not-use-in-prod-32x")
 
 BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
 CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
