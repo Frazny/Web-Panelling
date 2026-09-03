@@ -15,6 +15,7 @@ from flask import (
     url_for,
     jsonify,
 )
+from flask_session import Session
 
 # Cog yönetimi için IPC flag dizini
 COG_IPC_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "cog_ipc")
@@ -41,6 +42,15 @@ app = Flask(
 app.secret_key = os.environ.get("SECRET_KEY", "frazny-panel-secret-do-not-use-in-prod-32x")
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False  # http üzerinde çalışmak için
+
+# Filesystem session — cookie yerine sunucuda sakla
+_SESSION_DIR = os.path.join(BOT_DIR, "data", "flask_sessions")
+os.makedirs(_SESSION_DIR, exist_ok=True)
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = _SESSION_DIR
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7  # 7 gün
+Session(app)
 
 BOT_DIR = os.path.dirname(_BASE_DIR)  # panel/ klasörünün üstü = bot kök dizini
 CONFIG_PATH = os.path.join(BOT_DIR, "config.json")
