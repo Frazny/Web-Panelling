@@ -1,170 +1,372 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" style="--primary-color: #5865F2; --primary-gradient: linear-gradient(135deg, #5865F2 0%, #8547FF 100%); --primary-glow: rgba(88, 101, 242, 0.4); --primary-hover: #5865F2;">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Bot Panel{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bot Panel{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="{{ url_for('static', filename='lightrays.js') }}"></script>
 </head>
 <body>
-  <div id="page-loader"><div class="loader-ring"></div></div>
+<div id="light-rays-bg" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:-1;overflow:hidden;"></div>
+<div class="cursor-glow" id="cursor-glow"></div>
+<div class="particles-container" id="particles-container"></div>
 
-  <!-- SIDEBAR -->
-  <nav class="sidebar">
-    <div class="sidebar-server">
-      <div class="server-icon" id="sidebarServerIcon">K</div>
-      <div class="server-info">
-        <div class="server-name" id="sidebarServerName">{{ config.get('guild_id','—') }}</div>
-        <div class="server-status" id="sidebarStatus">Bağlanıyor...</div>
-      </div>
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <i class="fas fa-shield-halved" id="sidebar-brand-icon-fallback"></i>
+            </div>
+            <div class="sidebar-brand-text">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="sidebar-brand-name">Bot Panel</span>
+                </div>
+                <span class="sidebar-brand-tagline">Yönetim Paneli</span>
+            </div>
+        </div>
+
+        <div class="sidebar-server-card">
+            <div class="sidebar-server-avatar" id="sidebar-server-avatar">
+                <span id="sidebar-server-initial">?</span>
+            </div>
+            <div class="sidebar-server-info">
+                <span class="sidebar-server-name" id="sidebar-server-name">{{ config.guild_id }}</span>
+                <span class="sidebar-server-status"><span class="sidebar-dot"></span><span id="sidebar-online-count">0</span> çevrimiçi</span>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <div class="nav-section-label">Genel</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/dashboard" class="nav-link {% if request.path=='/dashboard' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#818cf8;"><i class="fas fa-chart-line"></i></span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/statistics" class="nav-link {% if request.path=='/statistics' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#38bdf8;"><i class="fas fa-chart-bar"></i></span>
+                    <span>İstatistikler</span>
+                </a>
+            </li>
+
+            <div class="nav-section-label">Moderasyon</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/members" class="nav-link {% if request.path=='/members' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#34d399;"><i class="fas fa-users"></i></span>
+                    <span>Üye Yönetimi</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/modlogs" class="nav-link {% if request.path=='/modlogs' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#fbbf24;"><i class="fas fa-list-alt"></i></span>
+                    <span>Loglar</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/message-send" class="nav-link {% if request.path=='/message-send' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#a78bfa;"><i class="fas fa-paper-plane"></i></span>
+                    <span>Mesaj Gönder</span>
+                </a>
+            </li>
+
+            <div class="nav-section-label">Koruma</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/protection" class="nav-link {% if request.path=='/protection' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#f87171;"><i class="fas fa-shield-alt"></i></span>
+                    <span>Koruma &amp; Limit</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/server-protection" class="nav-link {% if request.path=='/server-protection' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#fb923c;"><i class="fas fa-shield-virus"></i></span>
+                    <span>Sunucu Koruma</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/ai-antiraid" class="nav-link {% if request.path=='/ai-antiraid' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#2dd4bf;"><i class="fas fa-brain"></i></span>
+                    <span>AI Anti-Raid</span>
+                    <span class="nav-badge">AI</span>
+                </a>
+            </li>
+
+            <div class="nav-section-label">Sistemler</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/tickets" class="nav-link {% if request.path=='/tickets' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#60a5fa;"><i class="fas fa-ticket-alt"></i></span>
+                    <span>Ticket Paneli</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/auto-reply" class="nav-link {% if request.path=='/auto-reply' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#c084fc;"><i class="fas fa-reply"></i></span>
+                    <span>Oto-Cevaplar</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/embed-builder" class="nav-link {% if request.path=='/embed-builder' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#f472b6;"><i class="fas fa-pen-fancy"></i></span>
+                    <span>Embed Builder</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/auto-role" class="nav-link {% if request.path=='/auto-role' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#4ade80;"><i class="fas fa-user-plus"></i></span>
+                    <span>Oto-Rol</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/voice" class="nav-link {% if request.path=='/voice' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#94a3b8;"><i class="fas fa-microphone"></i></span>
+                    <span>Ses Yönetimi</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/music" class="nav-link {% if request.path=='/music' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#f9a8d4;"><i class="fas fa-music"></i></span>
+                    <span>Müzik Çalar</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/giveaway" class="nav-link {% if request.path=='/giveaway' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#fbbf24;"><i class="fas fa-gift"></i></span>
+                    <span>Çekilişler</span>
+                </a>
+            </li>
+
+            <div class="nav-section-label">Yönetim</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/bot-settings" class="nav-link {% if request.path=='/bot-settings' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#64748b;"><i class="fas fa-cog"></i></span>
+                    <span>Bot Ayarları</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/backup" class="nav-link {% if request.path=='/backup' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#a3e635;"><i class="fas fa-database"></i></span>
+                    <span>Sunucu Yedekleme</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/account" class="nav-link {% if request.path=='/account' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#93c5fd;"><i class="fas fa-user-circle"></i></span>
+                    <span>Hesap Detayları</span>
+                </a>
+            </li>
+
+            <div class="nav-section-label">Gelişmiş</div>
+            <li class="nav-item" style="display:block;">
+                <a href="/cogs" class="nav-link {% if request.path=='/cogs' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#fcd34d;"><i class="fas fa-puzzle-piece"></i></span>
+                    <span>Cog Yönetimi</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/logs" class="nav-link {% if request.path=='/logs' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#67e8f9;"><i class="fas fa-terminal"></i></span>
+                    <span>Bot Logları</span>
+                </a>
+            </li>
+            <li class="nav-item" style="display:block;">
+                <a href="/settings?section=general" class="nav-link {% if request.path=='/settings' %}active{% endif %}">
+                    <span class="nav-icon" style="color:#e2e8f0;"><i class="fas fa-sliders-h"></i></span>
+                    <span>Gelişmiş Ayarlar</span>
+                </a>
+            </li>
+        </nav>
+
+        <div class="sidebar-footer" style="display:block;">
+            <a href="/logout" class="nav-link sidebar-footer-logout">
+                <span class="nav-icon" style="color:#f87171;"><i class="fas fa-sign-out-alt"></i></span>
+                <span>Çıkış Yap</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <header class="header">
+            <div class="page-title">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <p>{% block page_subtitle %}Bot durumu ve genel istatistikler.{% endblock %}</p>
+            </div>
+            <div class="user-profile-wrapper" style="display:flex;align-items:center;gap:15px;">
+                <button id="theme-toggle-btn" onclick="toggleTheme()" style="background:var(--card-color);border:1px solid var(--border-color);color:var(--text-primary);cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease;font-size:1.1rem;box-shadow:0 4px 10px rgba(0,0,0,0.15);">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                </button>
+                <div class="user-profile" id="user-profile-trigger">
+                    <div class="avatar" id="user-avatar-container">
+                        {% if user.avatar %}
+                        <img id="user-avatar-img" src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" style="width:100%;height:100%;border-radius:50%;display:block;object-fit:cover;">
+                        {% else %}
+                        <span id="user-avatar-initial">{{ user.username[0] }}</span>
+                        {% endif %}
+                    </div>
+                    <span id="user-name">{{ user.global_name or user.username }}</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.75rem;opacity:0.6;margin-left:4px;"></i>
+                </div>
+
+                <div class="server-dropdown-card" id="server-dropdown-card">
+                    <div class="dropdown-banner" id="dropdown-banner"></div>
+                    <div class="dropdown-header">
+                        <div class="server-logo-wrapper">
+                            <span id="dropdown-server-initial" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.8rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#ed4245,#c0392b);border-radius:14px;">{{ config.guild_id | string | last }}</span>
+                        </div>
+                        <div class="server-info-text">
+                            <div class="server-name-row">
+                                <h4 id="dropdown-server-name">{{ config.guild_id }}</h4>
+                                <span class="partner-badge"><i class="fas fa-shield-alt"></i></span>
+                            </div>
+                            <div class="server-stats-row">
+                                <span class="online-indicator"><span class="status-dot dot-online" style="margin-right:4px;display:inline-block;"></span><span id="dropdown-online-count">0</span> Çevrimiçi</span>
+                                <span class="member-indicator"><span class="status-dot" style="background-color:#949ba4;margin-right:4px;display:inline-block;"></span><span id="dropdown-member-count">0</span> Üye</span>
+                            </div>
+                            <div class="server-creation" id="dropdown-server-created">Guild ID: {{ config.guild_id }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <div class="powered-by">POWERED BY BOT PANEL</div>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="custom-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i id="modal-icon" class="fas fa-info-circle"></i>
+            <h3 id="modal-title">İşlem Onayı</h3>
+        </div>
+        <div class="modal-body">
+            <p id="modal-message"></p>
+            <div id="modal-input-container" style="display:none;margin-top:1rem;">
+                <input type="text" id="modal-input" style="width:100%;padding:12px;background:rgba(0,0,0,0.2);border:1px solid var(--border-color);border-radius:8px;color:white;">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="modal-cancel">İptal</button>
+            <button class="btn btn-primary" id="modal-confirm">Tamam</button>
+        </div>
     </div>
+</div>
 
-    <div class="nav-section"><span class="nav-section-label">Genel</span></div>
-    <div class="nav-links">
-      <a href="/dashboard"   class="nav-link {% if request.path=='/dashboard' %}active{% endif %}"><span class="nav-icon">📊</span>Dashboard</a>
-      <a href="/statistics"  class="nav-link {% if request.path=='/statistics' %}active{% endif %}"><span class="nav-icon">📈</span>İstatistikler</a>
-    </div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+{% block scripts %}{% endblock %}
 
-    <div class="nav-section"><span class="nav-section-label">Moderasyon</span></div>
-    <div class="nav-links">
-      <a href="/members"     class="nav-link {% if request.path=='/members' %}active{% endif %}"><span class="nav-icon">👥</span>Üye Yönetimi</a>
-      <a href="/modlogs"     class="nav-link {% if request.path=='/modlogs' %}active{% endif %}"><span class="nav-icon">📋</span>Loglar</a>
-      <a href="/message-send" class="nav-link {% if request.path=='/message-send' %}active{% endif %}"><span class="nav-icon">✉️</span>Mesaj Gönder</a>
-    </div>
+<script>
+// Sidebar hover expand
+(function() {
+    const sidebar = document.querySelector('.sidebar');
+    const container = document.querySelector('.app-container');
+    if (!sidebar || !container) return;
+    let closeTimer = null;
+    function openSidebar() { if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; } sidebar.classList.add('sidebar--open'); container.classList.add('sidebar--open'); }
+    function closeSidebar() { closeTimer = setTimeout(function() { sidebar.classList.remove('sidebar--open'); container.classList.remove('sidebar--open'); closeTimer = null; }, 120); }
+    sidebar.addEventListener('mouseenter', openSidebar);
+    sidebar.addEventListener('mouseleave', closeSidebar);
+})();
 
-    <div class="nav-section"><span class="nav-section-label">Koruma</span></div>
-    <div class="nav-links">
-      <a href="/protection"       class="nav-link {% if request.path=='/protection' %}active{% endif %}"><span class="nav-icon">🛡️</span>Koruma &amp; Limit</a>
-      <a href="/server-protection" class="nav-link {% if request.path=='/server-protection' %}active{% endif %}"><span class="nav-icon">🔰</span>Sunucu Koruma</a>
-      <a href="/ai-antiraid"      class="nav-link {% if request.path=='/ai-antiraid' %}active{% endif %}"><span class="nav-icon">🤖</span>AI Anti-Raid<span class="nav-badge ai-badge">AI</span></a>
-    </div>
+// Cursor glow
+const glow = document.getElementById('cursor-glow');
+if (glow) { document.addEventListener('mousemove', (e) => { glow.style.left = e.clientX + 'px'; glow.style.top = e.clientY + 'px'; }); }
 
-    <div class="nav-section"><span class="nav-section-label">Sistemler</span></div>
-    <div class="nav-links">
-      <a href="/tickets"     class="nav-link {% if request.path=='/tickets' %}active{% endif %}"><span class="nav-icon">🎫</span>Ticket Paneli</a>
-      <a href="/auto-reply"  class="nav-link {% if request.path=='/auto-reply' %}active{% endif %}"><span class="nav-icon">💬</span>Oto-Cevaplar</a>
-      <a href="/embed-builder" class="nav-link {% if request.path=='/embed-builder' %}active{% endif %}"><span class="nav-icon">✏️</span>Embed Builder</a>
-      <a href="/auto-role"   class="nav-link {% if request.path=='/auto-role' %}active{% endif %}"><span class="nav-icon">👤</span>Oto-Rol</a>
-      <a href="/voice"       class="nav-link {% if request.path=='/voice' %}active{% endif %}"><span class="nav-icon">🔊</span>Ses Yönetimi</a>
-      <a href="/music"       class="nav-link {% if request.path=='/music' %}active{% endif %}"><span class="nav-icon">🎵</span>Müzik Çalar</a>
-      <a href="/giveaway"    class="nav-link {% if request.path=='/giveaway' %}active{% endif %}"><span class="nav-icon">🎁</span>Çekilişler</a>
-    </div>
+// Particles
+(function initParticles() {
+    const container = document.getElementById('particles-container');
+    if (!container) return;
+    for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 5 + 2;
+        p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:-20px;animation-duration:${Math.random()*10+10}s;animation-delay:${Math.random()*5}s;`;
+        container.appendChild(p);
+    }
+})();
 
-    <div class="nav-section"><span class="nav-section-label">Yönetim</span></div>
-    <div class="nav-links">
-      <a href="/bot-settings" class="nav-link {% if request.path=='/bot-settings' %}active{% endif %}"><span class="nav-icon">⚙️</span>Bot Ayarları</a>
-      <a href="/backup"      class="nav-link {% if request.path=='/backup' %}active{% endif %}"><span class="nav-icon">💾</span>Sunucu Yedekleme</a>
-      <a href="/account"     class="nav-link {% if request.path=='/account' %}active{% endif %}"><span class="nav-icon">👤</span>Hesap Detayları</a>
-    </div>
+// Theme toggle
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-theme');
+    localStorage.setItem('themeLightDark', isLight ? 'light' : 'dark');
+    document.getElementById('theme-icon').className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+}
+// Apply saved theme
+(function() {
+    if (localStorage.getItem('themeLightDark') === 'light') {
+        document.body.classList.add('light-theme');
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = 'fas fa-sun';
+    }
+    // Apply saved color theme
+    const gradients = {
+        'cyberpunk': { color:'#ff007f', gradient:'linear-gradient(135deg,#ff007f 0%,#00f0ff 100%)', glow:'rgba(255,0,127,0.4)' },
+        'sunset': { color:'#ff5e62', gradient:'linear-gradient(135deg,#ff5e62 0%,#ff9966 100%)', glow:'rgba(255,94,98,0.4)' },
+        'emerald': { color:'#11998e', gradient:'linear-gradient(135deg,#11998e 0%,#38ef7d 100%)', glow:'rgba(17,153,142,0.4)' },
+        'amethyst': { color:'#8a2387', gradient:'linear-gradient(135deg,#8a2387 0%,#e94057 100%)', glow:'rgba(138,35,135,0.4)' },
+        'classic': { color:'#5865F2', gradient:'linear-gradient(135deg,#5865F2 0%,#8547FF 100%)', glow:'rgba(88,101,242,0.4)' },
+        'toxic': { color:'#00FF87', gradient:'linear-gradient(135deg,#00FF87 0%,#60EFFF 100%)', glow:'rgba(0,255,135,0.4)' }
+    };
+    const saved = localStorage.getItem('themeColor') || 'classic';
+    const t = gradients[saved] || gradients['classic'];
+    document.documentElement.style.setProperty('--primary-color', t.color);
+    document.documentElement.style.setProperty('--primary-gradient', t.gradient);
+    document.documentElement.style.setProperty('--primary-glow', t.glow);
+    document.documentElement.style.setProperty('--primary-hover', t.color);
+})();
 
-    <div class="nav-section"><span class="nav-section-label">Gelişmiş</span></div>
-    <div class="nav-links">
-      <a href="/cogs"        class="nav-link {% if request.path=='/cogs' %}active{% endif %}"><span class="nav-icon">🧩</span>Cog Yönetimi</a>
-      <a href="/logs"        class="nav-link {% if request.path=='/logs' %}active{% endif %}"><span class="nav-icon">🖥️</span>Bot Logları</a>
-      <a href="/settings?section=general" class="nav-link {% if request.path=='/settings' %}active{% endif %}"><span class="nav-icon">🔧</span>Eski Ayarlar</a>
-    </div>
+// Toast
+window.showToast = function(message, type) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':'fa-exclamation-circle'}"></i> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); }, 4000);
+};
 
-    <div class="sidebar-bottom">
-      <a href="/logout" class="nav-link" style="color:var(--red)"><span class="nav-icon">🚪</span>Çıkış Yap</a>
-    </div>
-  </nav>
+// Modal
+window.showModal = function({ title, message, input=false, inputValue='', icon='fa-info-circle', confirmText='Tamam', cancelText='İptal' }) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('custom-modal');
+        document.getElementById('modal-title').innerText = title;
+        document.getElementById('modal-message').innerText = message;
+        document.getElementById('modal-icon').className = `fas ${icon}`;
+        document.getElementById('modal-confirm').innerText = confirmText;
+        document.getElementById('modal-cancel').innerText = cancelText;
+        const inputContainer = document.getElementById('modal-input-container');
+        const modalInput = document.getElementById('modal-input');
+        if (input) { inputContainer.style.display='block'; modalInput.value=''; modalInput.placeholder=inputValue||''; setTimeout(()=>modalInput.focus(),100); }
+        else inputContainer.style.display='none';
+        document.getElementById('modal-confirm').onclick = () => { modal.classList.remove('active'); resolve(input ? modalInput.value : true); };
+        document.getElementById('modal-cancel').onclick = () => { modal.classList.remove('active'); resolve(null); };
+        modal.onclick = (e) => { if(e.target.id==='custom-modal'){modal.classList.remove('active');resolve(null);} };
+        modal.classList.add('active');
+    });
+};
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <button onclick="toggleTheme()" class="theme-btn" id="themeBtn" title="Tema">🌙</button>
-    <div class="topbar-server-select" onclick="window.location='/dashboard'">
-      <div class="topbar-server-icon" id="topbarIcon">K</div>
-      <span id="topbarName">Sunucu</span>
-      <span style="color:var(--text3);font-size:.8rem">▾</span>
-    </div>
-    <div class="topbar-user" onclick="window.location='/account'">
-      {% if user.avatar %}
-      <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=32" alt="">
-      {% else %}
-      <div style="width:24px;height:24px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800">{{ user.username[0] }}</div>
-      {% endif %}
-      <span>{{ user.global_name or user.username }}</span>
-    </div>
-  </header>
-
-  <main class="content">
-    {% block content %}{% endblock %}
-  </main>
-
-  <div id="toastContainer"></div>
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
-  {% block scripts %}{% endblock %}
-
-  <script>
-    // Page loader
-    window.addEventListener('load', () => setTimeout(() => document.getElementById('page-loader').classList.add('hidden'), 150));
-
-    // Bot status sidebar
-    async function refreshSidebarStatus() {
-      try {
+// Bot status for sidebar
+async function refreshSidebarStatus() {
+    try {
         const r = await fetch('/api/bot/status');
         const d = await r.json();
-        const el = document.getElementById('sidebarStatus');
-        if (!el) return;
-        if (d.online) {
-          el.textContent = `${d.uptime || 'Çevrimiçi'}`;
-          el.style.color = 'var(--green)';
-        } else {
-          el.textContent = 'Çevrimdışı';
-          el.style.color = 'var(--red)';
-        }
-      } catch {}
-    }
-    refreshSidebarStatus();
-    setInterval(refreshSidebarStatus, 30000);
-
-    // Load server name
-    fetch('/api/config').then(r=>r.json()).then(cfg=>{
-      const gid = String(cfg.guild_id||'');
-      const name = cfg.server_name || ('Guild ' + gid.slice(-4));
-      document.getElementById('sidebarServerName').textContent = name;
-      document.getElementById('topbarName').textContent = name;
-      const letter = name[0]?.toUpperCase() || 'K';
-      document.getElementById('sidebarServerIcon').textContent = letter;
-      document.getElementById('topbarIcon').textContent = letter;
-    }).catch(()=>{});
-
-    // Theme
-    function applyTheme(t) {
-      const r = document.documentElement, b = document.getElementById('themeBtn');
-      if (t === 'light') {
-        r.style.setProperty('--bg','#f0f2f8');
-        r.style.setProperty('--bg2','#e8eaf2');
-        r.style.setProperty('--bg3','#dde0ee');
-        r.style.setProperty('--bg4','#d0d3e5');
-        r.style.setProperty('--text','#1a1d2e');
-        r.style.setProperty('--text2','#4a4f6a');
-        r.style.setProperty('--text3','#8b91aa');
-        r.style.setProperty('--card','rgba(255,255,255,0.8)');
-        r.style.setProperty('--card-border','rgba(0,0,0,0.08)');
-        if(b) b.textContent='☀️';
-      } else {
-        ['--bg','--bg2','--bg3','--bg4','--text','--text2','--text3','--card','--card-border'].forEach(v=>r.style.removeProperty(v));
-        if(b) b.textContent='🌙';
-      }
-    }
-    function toggleTheme() {
-      const n = (localStorage.getItem('theme')||'dark') === 'dark' ? 'light' : 'dark';
-      localStorage.setItem('theme', n); applyTheme(n);
-    }
-    applyTheme(localStorage.getItem('theme')||'dark');
-
-    // Page nav transition
-    document.querySelectorAll('.nav-link:not([href="/logout"])').forEach(a => {
-      a.addEventListener('click', e => {
-        const href = a.getAttribute('href');
-        if (!href || href.startsWith('#')) return;
-        e.preventDefault();
-        document.getElementById('page-loader').classList.remove('hidden');
-        setTimeout(() => location.href = href, 200);
-      });
-    });
-  </script>
+        const dot = document.querySelector('.sidebar-dot');
+        const cnt = document.getElementById('sidebar-online-count');
+        if (dot) dot.style.background = d.online ? '#4ade80' : '#ef4444';
+        if (cnt) cnt.textContent = d.online ? '1' : '0';
+    } catch {}
+}
+refreshSidebarStatus();
+setInterval(refreshSidebarStatus, 30000);
+</script>
 </body>
 </html>
