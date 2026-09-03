@@ -14,8 +14,12 @@ from flask import (
     session,
     url_for,
     jsonify,
+    make_response,
 )
-from flask_session import Session
+import json
+import hmac
+import hashlib
+import base64
 
 # Cog yönetimi için IPC flag dizini
 COG_IPC_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "cog_ipc")
@@ -41,19 +45,28 @@ app = Flask(
     template_folder=os.path.join(_BASE_DIR, "templates"),
     static_folder=os.path.join(_BASE_DIR, "static"),
 )
-# SECRET_KEY env'den okunur; yoksa sabit bir fallback kullanılır
-app.secret_key = os.environ.get("SECRET_KEY", "frazny-panel-secret-do-not-use-in-prod-32x")
+_SECRET = os.environ.get("SECRET_KEY", "frazny-panel-secret-key-2024").encode()
+app.secret_key = _SECRET
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7
 
-# Filesystem session — cookie yerine sunucuda sakla
-_SESSION_DIR = os.path.join(BOT_DIR, "data", "flask_sessions")
-os.makedirs(_SESSION_DIR, exist_ok=True)
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = _SESSION_DIR
-app.config["SESSION_PERMANENT"] = True
-app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7  # 7 gün
-Session(app)
+# ── Basit JSON+HMAC token yardımcıları (flask-session gerektirmez) ──
+def _make_token(data: dict) -> str:
+    payload = base64.urlsafe_b64encode(json.dumps(data).encode()).decode()
+    sig = hmac.new(_SECRET, payload.encode(), hashlib.sha256).hexdigest()
+    return f"{payload}.{sig}"
+
+def _verify_token(token: str):
+    try:
+        payload, sig = token.rsplit(".", 1)
+        expected = hmac.new(_SECRET, payload.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return None
+        return json.loads(base64.urlsafe_b64decode(payload).decode())
+    except Exception:
+        return None
 
 DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID", "")
 DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET", "")
@@ -81,8 +94,13 @@ def get_db():
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "user" not in session:
+        token = request.cookies.get("panel_token")
+        if not token:
             return redirect(url_for("login"))
+        data = _verify_token(token)
+        if not data or "user" not in data:
+            return redirect(url_for("login"))
+        request.panel_user = data["user"]
         return f(*args, **kwargs)
     return decorated
 
@@ -90,12 +108,18 @@ def login_required(f):
 def owner_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if "user" not in session:
+        token = request.cookies.get("panel_token")
+        if not token:
             return redirect(url_for("login"))
+        data = _verify_token(token)
+        if not data or "user" not in data:
+            return redirect(url_for("login"))
+        user = data["user"]
+        request.panel_user = user
         cfg = load_config()
-        allowed = [cfg.get("owner_id")] + cfg.get("kurucu_users", [])
-        if session["user"]["id"] not in allowed:
-            return render_template("error.html", message="Yetkiniz yok.")
+        allowed = [str(cfg.get("owner_id"))] + [str(x) for x in cfg.get("kurucu_users", [])]
+        if str(user.get("id")) not in allowed:
+            return render_template("error.html", message="Yetkiniz yok.", user=user)
         return f(*args, **kwargs)
     return decorated
 
@@ -167,15 +191,16 @@ def callback():
     except Exception as e:
         return f"Kullanıcı bilgisi hatası: {e}", 500
 
-    session["user"] = user
-    session["token"] = token
-    return redirect(url_for("dashboard"))
-
+    panel_token = _make_token({"user": user, "discord_token": token})
+    resp = make_response(redirect(url_for("dashboard")))
+    resp.set_cookie("panel_token", panel_token, max_age=86400*7, httponly=True, samesite="Lax")
+    return resp
 
 @app.route("/logout")
 def logout():
-    session.clear()
-    return redirect(url_for("login"))
+    resp = make_response(redirect(url_for("login")))
+    resp.delete_cookie("panel_token")
+    return resp
 
 
 @app.route("/dashboard")
@@ -213,7 +238,7 @@ def dashboard():
             "total_tags": 0,
         }
 
-    return render_template("dashboard.html", user=session["user"], config=cfg, stats=stats)
+    return render_template("dashboard.html", user=request.panel_user, config=cfg, stats=stats)
 
 
 @app.route("/settings")
@@ -221,7 +246,7 @@ def dashboard():
 def settings():
     cfg = load_config()
     section = request.args.get("section", "general")
-    return render_template("settings.html", user=session["user"], config=cfg, section=section)
+    return render_template("settings.html", user=request.panel_user, config=cfg, section=section)
 
 
 @app.route("/api/config", methods=["GET"])
@@ -333,7 +358,7 @@ def levels():
         db.close()
     except Exception:
         pass
-    return render_template("levels.html", user=session["user"], leaderboard=leaderboard, config=cfg)
+    return render_template("levels.html", user=request.panel_user, leaderboard=leaderboard, config=cfg)
 
 
 @app.route("/economy")
@@ -353,37 +378,37 @@ def economy():
         db.close()
     except Exception:
         pass
-    return render_template("economy.html", user=session["user"], leaderboard=leaderboard, config=cfg)
+    return render_template("economy.html", user=request.panel_user, leaderboard=leaderboard, config=cfg)
 
 
 @app.route("/logs")
 @owner_required
 def logs():
-    return render_template("logs.html", user=session["user"], config=load_config())
+    return render_template("logs.html", user=request.panel_user, config=load_config())
 
 
 @app.route("/moderation")
 @owner_required
 def moderation():
-    return render_template("moderation.html", user=session["user"], config=load_config())
+    return render_template("moderation.html", user=request.panel_user, config=load_config())
 
 
 @app.route("/tickets")
 @owner_required
 def tickets_page():
-    return render_template("tickets.html", user=session["user"], config=load_config())
+    return render_template("tickets.html", user=request.panel_user, config=load_config())
 
 
 @app.route("/members")
 @owner_required
 def members():
-    return render_template("members.html", user=session["user"], config=load_config())
+    return render_template("members.html", user=request.panel_user, config=load_config())
 
 
 @app.route("/cogs")
 @owner_required
 def cogs_page():
-    return render_template("cogs.html", user=session["user"], config=load_config())
+    return render_template("cogs.html", user=request.panel_user, config=load_config())
 
 
 # ─────────────────────────────────────────────
@@ -440,7 +465,7 @@ def api_warn_add():
         return jsonify({"error": "user_id gerekli"}), 400
     cfg = load_config()
     guild_id = cfg.get("guild_id")
-    mod_id = session["user"]["id"]
+    mod_id = request.panel_user["id"]
     try:
         db = get_db()
         db.execute(
